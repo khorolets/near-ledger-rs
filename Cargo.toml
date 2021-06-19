@@ -1,0 +1,18 @@
+[package]
+name = "near-ledger"
+version = "0.1.0"
+edition = "2018"
+authors = ["Bohdan Khorolets <b@khorolets.com>"]
+description = "Transport library to integrate with NEAR Ledger app"
+repository = "https://github.com/khorolets/near-ledger-rs/"
+license = "GPL-3.0-or-later"
+keywords = ["ledger", "nearprotocol"]
+
+[dependencies]
+ed25519-dalek = { version = "1" }
+ledger-transport = "0.8.0"
+ledger-transport-hid = "0.8.0"
+ledger-apdu = "0.8.0"
+
+# The fix is needed for seemless clap integration: https://github.com/wusyong/slip10/pull/3
+slip10 = { git = "https://github.com/frol/slip10", rev = "159d5fd46a44b9251d0748ef1f343f908bf57a22" }
