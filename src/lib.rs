@@ -1,3 +1,8 @@
+//! NEAR <-> Ledger transport
+//!
+//! Provides a set of commands that can be executed to communicate with NEAR App installed on Ledger device:
+//! - Read PublicKey from Ledger device by HD Path
+//! - Sign a Transaction
 use ledger::TransportNativeHID;
 use ledger_apdu::map_apdu_error_description;
 use ledger_transport::errors::TransportError;
@@ -11,18 +16,24 @@ const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
 const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
 const CHUNK_SIZE: usize = 128; // Chunk size to be sent to Ledger
 
+/// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction = Vec<u8>;
+/// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type NEARLedgerAppVersion = Vec<u8>;
+/// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type SignatureBytes = Vec<u8>;
 
 #[derive(Debug)]
 pub enum NEARLedgerError {
+    /// Self-explanatory one
     DeviceNotFound,
+    /// Error occurred while exchanging with Ledger device
     APDUExchangeError(String),
+    /// Error with transport
     APDUTransportError(TransportError),
 }
 
-/// Converts BIP32Path into bytes (Vec<u8>)
+/// Converts BIP32Path into bytes (`Vec<u8>`)
 fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
     (0..hd_path.depth())
         .map(|index| {
@@ -33,7 +44,14 @@ fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
         .collect::<Vec<u8>>()
 }
 
+/// Get the version of NEAR App installed on Ledger
+///
+/// # Returns
+///
+/// * A `Result` whose `Ok` value is an `NEARLedgerAppVersion` (just a `Vec<u8>` for now, where first value is a major version, second is a minor and the last is the path)
+///  and whose `Err` value is a `NEARLedgerError` containing an error which occurred.
 pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
+    //! Something
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let transport = match TransportNativeHID::new() {
@@ -69,6 +87,46 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 }
 
 /// Gets PublicKey from the Ledger on the given `hd_path`
+///
+/// # Inputs
+/// * `hd_path` - seed phrase hd path `slip10::BIP32Path` for which PublicKey to look
+///
+/// # Returns
+///
+/// * A `Result` whose `Ok` value is an `ed25519_dalek::PublicKey` and whose `Err` value is a
+///   `NEARLedgerError` containing an error which
+///   occured.
+///
+/// # Examples
+///
+/// ```
+/// use near_ledger::get_public_key;
+/// use slip10::BIP32Path;
+///
+/// # asyn fn main() {
+/// let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
+/// let public_key = match get_public_key(hd_path)
+///    .await
+///    .map_err(|near_ledger_error| {
+///        panic!(
+///            "An error occured while getting PublicKey from Ledger device: {:?}",
+///             near_ledger_error,
+///        )
+///    })?;
+/// # }
+/// ```
+///
+/// # Trick
+///
+/// To convert the answer into `near_crypto::PublicKey` do:
+///
+/// ```
+/// near_crypto::PublicKey::ED25519(
+///     near_crypto::ED25519PublicKey::from(
+///         public_key.to_bytes(),
+///     )
+/// )
+/// ```
 pub async fn get_public_key(
     hd_path: slip10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
@@ -109,6 +167,47 @@ pub async fn get_public_key(
     };
 }
 
+/// Sign the transaction. Transaction should be [borsh serialized](https://github.com/near/borsh-rs) `Vec<u8>`
+///
+/// # Inputs
+/// * `unsigned_transaction_borsh_serializer` - unsigned transaction `near_primitives::transaction::Transaction`
+/// which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
+/// * `seed_phrase_hd_path` - seed phrase hd path `slip10::BIP32Path` with which to sign
+///
+/// # Returns
+///
+/// * A `Result` whose `Ok` value is an `Signature` (bytes) and whose `Err` value is a
+/// `NEARLedgerError` containing an error which occured.
+///
+/// # Examples
+///
+/// ```
+/// use near_ledger::sign_transaction;
+/// use borsh::BorshSerializer;
+/// use slip10::BIP32Path;
+///
+/// # asyn fn main() {
+/// let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
+/// let borsh_transaction = near_unsigned_transaction.try_to_vec().unwrap();
+/// let signature = match sign_transaction(borsh_transaction, hd_path)
+///    .await
+///    .map_err(|near_ledger_error| {
+///        panic!(
+///            "An error occured while getting PublicKey from Ledger device: {:?}",
+///             near_ledger_error,
+///        )
+///    })?;
+/// # }
+/// ```
+///
+/// # Trick
+///
+/// To convert the answer into `near_crypto::Signature` do:
+///
+/// ```
+/// near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519, &signature)
+///     .expect("Signature is not expected to fail on deserialization")
+/// ```
 pub async fn sign_transaction(
     unsigned_transaction_borsh_serializer: BorshSerializedUnsignedTransaction,
     seed_phrase_hd_path: slip10::BIP32Path,
