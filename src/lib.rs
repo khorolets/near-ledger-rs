@@ -95,7 +95,7 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 ///
 /// * A `Result` whose `Ok` value is an `ed25519_dalek::PublicKey` and whose `Err` value is a
 ///   `NEARLedgerError` containing an error which
-///   occured.
+///   occurred.
 ///
 /// # Examples
 ///
@@ -109,7 +109,7 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 ///    .await
 ///    .map_err(|near_ledger_error| {
 ///        panic!(
-///            "An error occured while getting PublicKey from Ledger device: {:?}",
+///            "An error occurred while getting PublicKey from Ledger device: {:?}",
 ///             near_ledger_error,
 ///        )
 ///    })?;
@@ -177,7 +177,7 @@ pub async fn get_public_key(
 /// # Returns
 ///
 /// * A `Result` whose `Ok` value is an `Signature` (bytes) and whose `Err` value is a
-/// `NEARLedgerError` containing an error which occured.
+/// `NEARLedgerError` containing an error which occurred.
 ///
 /// # Examples
 ///
@@ -193,7 +193,7 @@ pub async fn get_public_key(
 ///    .await
 ///    .map_err(|near_ledger_error| {
 ///        panic!(
-///            "An error occured while getting PublicKey from Ledger device: {:?}",
+///            "An error occurred while getting PublicKey from Ledger device: {:?}",
 ///             near_ledger_error,
 ///        )
 ///    })?;
