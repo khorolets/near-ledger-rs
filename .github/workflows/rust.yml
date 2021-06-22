@@ -10,11 +10,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  check:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - name: apt-get update
+      run: sudo apt-get update
+    - name: Install libudev
+      run: sudo apt-get -y install libudev-dev libsystemd-dev
     - name: Check
       run: cargo check --verbose
