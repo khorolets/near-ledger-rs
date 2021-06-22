@@ -1,5 +1,6 @@
 # near-ledger-rs
 
+[![Rust](https://github.com/khorolets/near-ledger-rs/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/khorolets/near-ledger-rs/actions/workflows/rust.yml)
 [![](http://meritbadge.herokuapp.com/near-ledger)](https://crates.io/crates/near-ledger)
 [![]( https://docs.rs/near-ledger/badge.svg)]( https://docs.rs/near-ledger/)
 
