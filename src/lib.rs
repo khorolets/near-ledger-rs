@@ -3,10 +3,8 @@
 //! Provides a set of commands that can be executed to communicate with NEAR App installed on Ledger device:
 //! - Read PublicKey from Ledger device by HD Path
 //! - Sign a Transaction
-use ledger::TransportNativeHID;
-use ledger_apdu::map_apdu_error_description;
-use ledger_transport::errors::TransportError;
-use ledger_transport::{APDUCommand, APDUTransport};
+use ledger_transport_hid::{hidapi::HidApi, TransportNativeHID, LedgerHIDError};
+use ledger_transport::APDUCommand;
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
@@ -30,7 +28,7 @@ pub enum NEARLedgerError {
     /// Error occurred while exchanging with Ledger device
     APDUExchangeError(String),
     /// Error with transport
-    APDUTransportError(TransportError),
+    LedgerHIDError(LedgerHIDError),
 }
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
@@ -54,8 +52,12 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
     //! Something
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let transport = match TransportNativeHID::new() {
-        Ok(transport) => APDUTransport::new(transport),
+    let hidapi = match HidApi::new() {
+        Ok(hidapi) => hidapi,
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+    };
+    let transport = match TransportNativeHID::new(&hidapi) {
+        Ok(transport) => transport,
         // TODO: refactor this
         // https://github.com/Zondax/ledger-rs/issues/65
         Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
@@ -69,20 +71,19 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
             p2: 0,
             data: vec![],
         })
-        .await
     {
         Ok(response) => {
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
-            if response.retcode == RETURN_CODE_OK {
-                return Ok(response.data);
+            if response.retcode() == RETURN_CODE_OK {
+                return Ok(response.data().to_vec());
             } else {
-                let error_string = map_apdu_error_description(response.retcode).to_string();
+                let error_string = response.error_code().unwrap().to_string(); // Should not fail
                 return Err(NEARLedgerError::APDUExchangeError(error_string));
             }
         }
-        Err(err) => return Err(NEARLedgerError::APDUTransportError(err)),
+        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
     };
 }
 
@@ -132,8 +133,12 @@ pub async fn get_public_key(
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let transport = match TransportNativeHID::new() {
-        Ok(transport) => APDUTransport::new(transport),
+    let hidapi = match HidApi::new() {
+        Ok(hidapi) => hidapi,
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+    };
+    let transport = match TransportNativeHID::new(&hidapi) {
+        Ok(transport) => transport,
         // TODO: refactor this
         // https://github.com/Zondax/ledger-rs/issues/65
         Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
@@ -150,20 +155,19 @@ pub async fn get_public_key(
             p2: NETWORK_ID,
             data: hd_path_bytes,
         })
-        .await
     {
         Ok(response) => {
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
-            if response.retcode == RETURN_CODE_OK {
-                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data).unwrap());
+            if response.retcode() == RETURN_CODE_OK {
+                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
             } else {
-                let error_string = map_apdu_error_description(response.retcode).to_string();
+                let error_string = response.error_code().unwrap().to_string(); // Should not fail
                 return Err(NEARLedgerError::APDUExchangeError(error_string));
             }
         }
-        Err(err) => return Err(NEARLedgerError::APDUTransportError(err)),
+        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
     };
 }
 
@@ -214,8 +218,12 @@ pub async fn sign_transaction(
 ) -> Result<SignatureBytes, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let transport = match TransportNativeHID::new() {
-        Ok(transport) => APDUTransport::new(transport),
+    let hidapi = match HidApi::new() {
+        Ok(hidapi) => hidapi,
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+    };
+    let transport = match TransportNativeHID::new(&hidapi) {
+        Ok(transport) => transport,
         // TODO: refactor this
         // https://github.com/Zondax/ledger-rs/issues/65
         Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
@@ -241,22 +249,21 @@ pub async fn sign_transaction(
                 p2: NETWORK_ID,
                 data: chunk.to_vec(),
             })
-            .await
         {
             Ok(response) => {
                 // Ok means we successfully exchanged with the Ledger
                 // but doesn't mean our request succeeded
                 // we need to check it based on `response.retcode`
-                if response.retcode == RETURN_CODE_OK {
+                if response.retcode() == RETURN_CODE_OK {
                     if is_last_chunk {
-                        return Ok(response.data);
+                        return Ok(response.data().to_vec());
                     }
                 } else {
-                    let error_string = map_apdu_error_description(response.retcode).to_string();
+                    let error_string = response.error_code().unwrap().to_string(); // Should not fail
                     return Err(NEARLedgerError::APDUExchangeError(error_string));
                 }
             }
-            Err(err) => return Err(NEARLedgerError::APDUTransportError(err)),
+            Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
         };
     }
     Err(NEARLedgerError::APDUExchangeError(
