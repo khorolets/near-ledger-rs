@@ -3,8 +3,8 @@
 //! Provides a set of commands that can be executed to communicate with NEAR App installed on Ledger device:
 //! - Read PublicKey from Ledger device by HD Path
 //! - Sign a Transaction
-use ledger_transport_hid::{hidapi::HidApi, TransportNativeHID, LedgerHIDError};
 use ledger_transport::APDUCommand;
+use ledger_transport_hid::{hidapi::HidApi, LedgerHIDError, TransportNativeHID};
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
@@ -48,13 +48,13 @@ fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
 ///
 /// * A `Result` whose `Ok` value is an `NEARLedgerAppVersion` (just a `Vec<u8>` for now, where first value is a major version, second is a minor and the last is the path)
 ///  and whose `Err` value is a `NEARLedgerError` containing an error which occurred.
-pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
+pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
     //! Something
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let hidapi = match HidApi::new() {
         Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
     };
     let transport = match TransportNativeHID::new(&hidapi) {
         Ok(transport) => transport,
@@ -63,15 +63,13 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
         Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
     };
 
-    match transport
-        .exchange(&APDUCommand {
-            cla: CLA,
-            ins: INS_GET_VERSION,
-            p1: 0, // Instruction parameter 1 (offset)
-            p2: 0,
-            data: vec![],
-        })
-    {
+    match transport.exchange(&APDUCommand {
+        cla: CLA,
+        ins: INS_GET_VERSION,
+        p1: 0, // Instruction parameter 1 (offset)
+        p2: 0,
+        data: vec![],
+    }) {
         Ok(response) => {
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
@@ -79,7 +77,10 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
             if response.retcode() == RETURN_CODE_OK {
                 return Ok(response.data().to_vec());
             } else {
-                let error_string = response.error_code().unwrap().to_string(); // Should not fail
+                let error_string = response
+                    .error_code()
+                    .map(|error_code| error_code.to_string())
+                    .unwrap_or_else(|retcode| format!("Unknown Ledger APDU retcode: {}", retcode));
                 return Err(NEARLedgerError::APDUExchangeError(error_string));
             }
         }
@@ -128,14 +129,14 @@ pub async fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 ///     )
 /// )
 /// ```
-pub async fn get_public_key(
+pub fn get_public_key(
     hd_path: slip10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let hidapi = match HidApi::new() {
         Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
     };
     let transport = match TransportNativeHID::new(&hidapi) {
         Ok(transport) => transport,
@@ -147,15 +148,13 @@ pub async fn get_public_key(
     // hd_path must be converted into bytes to be sent as `data` to the Ledger
     let hd_path_bytes = hd_path_to_bytes(&hd_path);
 
-    match transport
-        .exchange(&APDUCommand {
-            cla: CLA,
-            ins: INS_GET_PUBLIC_KEY,
-            p1: 0, // Instruction parameter 1 (offset)
-            p2: NETWORK_ID,
-            data: hd_path_bytes,
-        })
-    {
+    match transport.exchange(&APDUCommand {
+        cla: CLA,
+        ins: INS_GET_PUBLIC_KEY,
+        p1: 0, // Instruction parameter 1 (offset)
+        p2: NETWORK_ID,
+        data: hd_path_bytes,
+    }) {
         Ok(response) => {
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
@@ -163,7 +162,10 @@ pub async fn get_public_key(
             if response.retcode() == RETURN_CODE_OK {
                 return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
             } else {
-                let error_string = response.error_code().unwrap().to_string(); // Should not fail
+                let error_string = response
+                    .error_code()
+                    .map(|error_code| error_code.to_string())
+                    .unwrap_or_else(|retcode| format!("Unknown Ledger APDU retcode: {}", retcode));
                 return Err(NEARLedgerError::APDUExchangeError(error_string));
             }
         }
@@ -212,7 +214,7 @@ pub async fn get_public_key(
 /// near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519, &signature)
 ///     .expect("Signature is not expected to fail on deserialization")
 /// ```
-pub async fn sign_transaction(
+pub fn sign_transaction(
     unsigned_transaction_borsh_serializer: BorshSerializedUnsignedTransaction,
     seed_phrase_hd_path: slip10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
@@ -220,7 +222,7 @@ pub async fn sign_transaction(
     // will return an error if Ledger is not connected
     let hidapi = match HidApi::new() {
         Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound)
+        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
     };
     let transport = match TransportNativeHID::new(&hidapi) {
         Ok(transport) => transport,
@@ -241,15 +243,13 @@ pub async fn sign_transaction(
 
     for (i, chunk) in chunks.enumerate() {
         let is_last_chunk = chunks_count == i + 1;
-        match transport
-            .exchange(&APDUCommand {
-                cla: CLA,
-                ins: INS_SIGN_TRANSACTION,
-                p1: if is_last_chunk { 0x80 } else { 0 }, // Instruction parameter 1 (offset)
-                p2: NETWORK_ID,
-                data: chunk.to_vec(),
-            })
-        {
+        match transport.exchange(&APDUCommand {
+            cla: CLA,
+            ins: INS_SIGN_TRANSACTION,
+            p1: if is_last_chunk { 0x80 } else { 0 }, // Instruction parameter 1 (offset)
+            p2: NETWORK_ID,
+            data: chunk.to_vec(),
+        }) {
             Ok(response) => {
                 // Ok means we successfully exchanged with the Ledger
                 // but doesn't mean our request succeeded
@@ -259,7 +259,12 @@ pub async fn sign_transaction(
                         return Ok(response.data().to_vec());
                     }
                 } else {
-                    let error_string = response.error_code().unwrap().to_string(); // Should not fail
+                    let error_string = response
+                        .error_code()
+                        .map(|error_code| error_code.to_string())
+                        .unwrap_or_else(|retcode| {
+                            format!("Unknown Ledger APDU retcode: {}", retcode)
+                        });
                     return Err(NEARLedgerError::APDUExchangeError(error_string));
                 }
             }
