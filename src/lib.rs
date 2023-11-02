@@ -62,15 +62,24 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
         // https://github.com/Zondax/ledger-rs/issues/65
         Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
     };
-
-    match transport.exchange(&APDUCommand {
+    let command = APDUCommand {
         cla: CLA,
         ins: INS_GET_VERSION,
         p1: 0, // Instruction parameter 1 (offset)
         p2: 0,
         data: vec![],
-    }) {
+    };
+
+    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+
+    match transport.exchange(&command) {
         Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}, {:?}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+                response.error_code()
+            );
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
@@ -148,14 +157,23 @@ pub fn get_public_key(
     // hd_path must be converted into bytes to be sent as `data` to the Ledger
     let hd_path_bytes = hd_path_to_bytes(&hd_path);
 
-    match transport.exchange(&APDUCommand {
+    let command = APDUCommand {
         cla: CLA,
         ins: INS_GET_PUBLIC_KEY,
         p1: 0, // Instruction parameter 1 (offset)
         p2: NETWORK_ID,
         data: hd_path_bytes,
-    }) {
+    };
+    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+
+    match transport.exchange(&command) {
         Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}, {:?}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+                response.error_code()
+            );
             // Ok means we successfully exchanged with the Ledger
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
@@ -243,14 +261,22 @@ pub fn sign_transaction(
 
     for (i, chunk) in chunks.enumerate() {
         let is_last_chunk = chunks_count == i + 1;
-        match transport.exchange(&APDUCommand {
+        let command = APDUCommand {
             cla: CLA,
             ins: INS_SIGN_TRANSACTION,
             p1: if is_last_chunk { 0x80 } else { 0 }, // Instruction parameter 1 (offset)
             p2: NETWORK_ID,
             data: chunk.to_vec(),
-        }) {
+        };
+        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        match transport.exchange(&command) {
             Ok(response) => {
+                log::info!(
+                    "APDU out: {}\nAPDU ret code: {:x}, {:?}",
+                    hex::encode(response.apdu_data()),
+                    response.retcode(),
+                    response.error_code()
+                );
                 // Ok means we successfully exchanged with the Ledger
                 // but doesn't mean our request succeeded
                 // we need to check it based on `response.retcode`

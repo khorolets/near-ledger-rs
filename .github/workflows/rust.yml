@@ -24,4 +24,4 @@ jobs:
     - name: Install libudev
       run: sudo apt-get -y install libudev-dev libsystemd-dev
     - name: Check
-      run: cargo check --verbose
+      run: cargo check --verbose --examples

@@ -79,3 +79,26 @@ To convert the answer into `near_crypto::Signature` do:
 near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519, &signature)
     .expect("Signature is not expected to fail on deserialization")
 ```
+
+## Executable examples
+
+### Get version
+
+```bash
+RUST_LOG=get_version,near_ledger=info cargo run --example get_version
+```
+
+### Get PublicKey from Ledger
+
+```bash
+RUST_LOG=get_public_key,near_ledger=info cargo run --example get_public_key
+```
+
+### Sign a transaction
+
+```bash
+RUST_LOG=sign_transaction,near_ledger=info cargo run --example sign_transaction
+```
+
+
+
