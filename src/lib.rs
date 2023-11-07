@@ -5,6 +5,7 @@
 //! - Sign a Transaction
 use ledger_transport::APDUCommand;
 use ledger_transport_hid::{hidapi::HidApi, LedgerHIDError, TransportNativeHID};
+use sha2::{Digest, Sha256};
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
@@ -21,6 +22,11 @@ const SIGN_NORMAL: u8 = 0;
 const SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
 const SIGN_BLIND: u8 = 1;
 
+// this is value from LedgerHQ/app-near repo
+const SW_INCORRECT_P1_P2: u16 = 0x6A86;
+// this is value from LedgerHQ/app-near repo
+const SW_BUFFER_OVERFLOW: u16 = 0x6990;
+
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type NEARLedgerAppVersion = Vec<u8>;
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
@@ -36,7 +42,14 @@ pub enum NEARLedgerError {
     BlindSignatureNotSupported,
     /// Error with transport
     LedgerHIDError(LedgerHIDError),
+    /// Transaction is too large to be signed
+    BufferOverflow(OnlyBlindSigning),
 }
+
+const SHA256_SIZE: usize = 32;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct OnlyBlindSigning(pub [u8; SHA256_SIZE]);
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
 fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
@@ -254,7 +267,7 @@ pub fn sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(unsigned_tx);
+    data.extend(&unsigned_tx);
 
     let chunks = data.chunks(CHUNK_SIZE);
     let chunks_count = chunks.len();
@@ -290,6 +303,10 @@ pub fn sign_transaction(
                 } else {
                     let retcode = response.retcode();
 
+                    if retcode == SW_BUFFER_OVERFLOW {
+                        return Err(NEARLedgerError::BufferOverflow(compute_hash(&unsigned_tx)));
+                    }
+
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
                     return Err(NEARLedgerError::APDUExchangeError(error_string));
                 }
@@ -302,8 +319,19 @@ pub fn sign_transaction(
     ))
 }
 
+fn compute_hash(bytes: &[u8]) -> OnlyBlindSigning {
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+
+    let result = hasher.finalize();
+    let mut hash = [0u8; SHA256_SIZE];
+    hash.copy_from_slice(&result[..]);
+
+    OnlyBlindSigning(hash)
+}
+
 pub fn blind_sign_transaction(
-    hash: [u8; 32],
+    hash: OnlyBlindSigning,
     seed_phrase_hd_path: slip10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
@@ -312,7 +340,7 @@ pub fn blind_sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(hash);
+    data.extend(hash.0);
 
     let command = APDUCommand {
         cla: CLA,
@@ -336,7 +364,7 @@ pub fn blind_sign_transaction(
                 Ok(response.data().to_vec())
             } else {
                 let retcode = response.retcode();
-                if retcode == 0x6A86 {
+                if retcode == SW_INCORRECT_P1_P2 {
                     return Err(NEARLedgerError::BlindSignatureNotSupported);
                 }
 
