@@ -1,7 +1,8 @@
 use std::{convert::TryFrom, str::FromStr};
 
 use base58::FromBase58;
-use near_ledger::NEARLedgerError;
+use ed25519_dalek::{PublicKey, Signature, SignatureError, Verifier};
+use near_ledger::{NEARLedgerError, OnlyBlindSigning};
 use near_primitives::types::AccountId;
 
 use near_primitives::borsh::BorshSerialize;
@@ -45,23 +46,7 @@ fn too_long_tx() -> near_primitives::transaction::Transaction {
     }
 }
 
-fn main() -> Result<(), NEARLedgerError> {
-    env_logger::builder().init();
-    let unsigned_transaction = too_long_tx();
-    log::info!("{:#?}", unsigned_transaction);
-
-    let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
-
-    let bytes = unsigned_transaction
-        .try_to_vec()
-        .expect("Transaction is not expected to fail on serialization");
-    log::info!("bytes len : {}", bytes.len());
-    let err = near_ledger::sign_transaction(bytes.clone(), hd_path.clone()).unwrap_err();
-
-    assert!(
-        matches!(err, NEARLedgerError::APDUExchangeError(x) if x == "Ledger APDU retcode: 0x6990" )
-    );
-
+fn compute_hash(bytes: &[u8]) -> OnlyBlindSigning {
     let mut hasher = Sha256::new();
     hasher.update(&bytes);
 
@@ -69,8 +54,47 @@ fn main() -> Result<(), NEARLedgerError> {
     let mut hash = [0u8; 32];
     hash.copy_from_slice(&result[..]);
 
+    OnlyBlindSigning(hash)
+}
+
+pub fn verify_near(
+    bytes: &[u8],
+    pub_key: &PublicKey,
+    signature: &Signature,
+) -> Result<(), SignatureError> {
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+
+    let result = hasher.finalize();
+    let mut hash = [0u8; 32];
+    hash.copy_from_slice(&result[..]);
+
+    pub_key.verify(&hash, &signature)
+}
+fn main() -> Result<(), NEARLedgerError> {
+    env_logger::builder().init();
+    let unsigned_transaction = too_long_tx();
+    log::info!("{:#?}", unsigned_transaction);
+
+    let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
+    let public_key = near_ledger::get_public_key(hd_path.clone())?;
+
+    let bytes = unsigned_transaction
+        .try_to_vec()
+        .expect("Transaction is not expected to fail on serialization");
+    log::info!("bytes len : {}", bytes.len());
+    let err = near_ledger::sign_transaction(bytes.clone(), hd_path.clone()).unwrap_err();
+
+    let hash = compute_hash(&bytes);
+    log::info!("hash: {}", hex::encode(&hash.0));
+    assert!(matches!(err, NEARLedgerError::BufferOverflow(err_hash) if err_hash == hash));
+
     let signature = near_ledger::blind_sign_transaction(hash, hd_path)?;
+    let signature = Signature::from_bytes(&signature).unwrap();
 
     log::info!("signature: {}", hex::encode(&signature));
+    let result = verify_near(&bytes, &public_key, &signature);
+    log::info!("result : {:#?}", result);
+    assert!(result.is_ok());
     Ok(())
 }
