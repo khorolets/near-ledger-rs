@@ -1,8 +1,8 @@
 use std::{convert::TryFrom, str::FromStr};
 
 use base58::FromBase58;
-use ed25519_dalek::{Signature, SignatureError};
 use ed25519_dalek::{PublicKey, Verifier};
+use ed25519_dalek::{Signature, SignatureError};
 use near_ledger::NEARLedgerError;
 use near_primitives::types::AccountId;
 
@@ -40,14 +40,18 @@ fn tx() -> near_primitives::transaction::Transaction {
     }
 }
 
-pub fn verify_near(bytes: &[u8], pub_key: &PublicKey, signature: &Signature) -> Result<(), SignatureError> {
+pub fn verify_near(
+    bytes: &[u8],
+    pub_key: &PublicKey,
+    signature: &Signature,
+) -> Result<(), SignatureError> {
     let mut hasher = Sha256::new();
     hasher.update(&bytes);
 
     let result = hasher.finalize();
     let mut hash = [0u8; 32];
     hash.copy_from_slice(&result[..]);
-    
+
     pub_key.verify(&hash, &signature)
 }
 

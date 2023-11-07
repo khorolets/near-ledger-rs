@@ -221,7 +221,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// # Examples
 ///
 /// ```no_run
-/// use near_ledger::{sign_transaction, SignTarget};
+/// use near_ledger::sign_transaction;
 /// use near_primitives::borsh::BorshSerialize;
 /// use slip10::BIP32Path;
 /// use std::str::FromStr;
@@ -230,7 +230,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// # let near_unsigned_transaction = [10; 250];
 /// let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
 /// let borsh_transaction = near_unsigned_transaction.try_to_vec().unwrap();
-/// let signature = sign_transaction(SignTarget::BorshUnsignedTx(borsh_transaction), hd_path).unwrap();
+/// let signature = sign_transaction(borsh_transaction, hd_path).unwrap();
 /// println!("{:#?}", signature);
 /// # }
 /// ```
