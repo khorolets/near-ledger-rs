@@ -27,6 +27,9 @@ const SW_INCORRECT_P1_P2: u16 = 0x6A86;
 // this is value from LedgerHQ/app-near repo
 const SW_BUFFER_OVERFLOW: u16 = 0x6990;
 
+// this is value from LedgerHQ/app-near repo
+const SW_SETTING_BLIND_DISABLED: u16 = 0x6192;
+
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type NEARLedgerAppVersion = Vec<u8>;
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
@@ -40,6 +43,8 @@ pub enum NEARLedgerError {
     APDUExchangeError(String),
     /// Blind signature not supported
     BlindSignatureNotSupported,
+    /// Blind signature disabled in ledger's app settings
+    BlindSignatureDisabled,
     /// Error with transport
     LedgerHIDError(LedgerHIDError),
     /// Transaction is too large to be signed
@@ -366,6 +371,9 @@ pub fn blind_sign_transaction(
                 let retcode = response.retcode();
                 if retcode == SW_INCORRECT_P1_P2 {
                     return Err(NEARLedgerError::BlindSignatureNotSupported);
+                }
+                if retcode == SW_SETTING_BLIND_DISABLED {
+                    return Err(NEARLedgerError::BlindSignatureDisabled);
                 }
 
                 let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
