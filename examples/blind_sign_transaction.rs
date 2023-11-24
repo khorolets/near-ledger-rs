@@ -6,7 +6,7 @@ use near_ledger::{NEARLedgerError, OnlyBlindSigning};
 use near_primitives::types::AccountId;
 
 use near_primitives::borsh::BorshSerialize;
-use sha2::{Digest, Sha256};
+use near_primitives_core::hash::CryptoHash;
 use slip10::BIP32Path;
 
 fn too_long_tx() -> near_primitives::transaction::Transaction {
@@ -46,31 +46,16 @@ fn too_long_tx() -> near_primitives::transaction::Transaction {
     }
 }
 
-fn compute_hash(bytes: &[u8]) -> OnlyBlindSigning {
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-
-    let result = hasher.finalize();
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&result[..]);
-
-    OnlyBlindSigning(hash)
-}
-
 pub fn verify_near(
     bytes: &[u8],
     pub_key: &PublicKey,
     signature: &Signature,
 ) -> Result<(), SignatureError> {
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
+    let hash = CryptoHash::hash_bytes(bytes);
 
-    let result = hasher.finalize();
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&result[..]);
-
-    pub_key.verify(&hash, &signature)
+    pub_key.verify(&hash.as_ref(), &signature)
 }
+
 fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
     let unsigned_transaction = too_long_tx();
@@ -85,14 +70,20 @@ fn main() -> Result<(), NEARLedgerError> {
     log::info!("bytes len : {}", bytes.len());
     let err = near_ledger::sign_transaction(bytes.clone(), hd_path.clone()).unwrap_err();
 
-    let hash = compute_hash(&bytes);
-    log::info!("hash: {}", hex::encode(&hash.0));
+    let hash = OnlyBlindSigning::hash_bytes(&bytes);
+    log::info!("{:<25} : {}", "hash (hex)", hex::encode(hash.0.as_ref()));
+    log::info!("{:<25} : {}", "hash", hash.0);
     assert!(matches!(err, NEARLedgerError::BufferOverflow(err_hash) if err_hash == hash));
 
-    let signature = near_ledger::blind_sign_transaction(hash, hd_path)?;
-    let signature = Signature::from_bytes(&signature).unwrap();
+    let signature_bytes = near_ledger::blind_sign_transaction(hash, hd_path)?;
+    let signature = Signature::from_bytes(&signature_bytes).unwrap();
 
-    log::info!("signature: {}", hex::encode(&signature));
+    let signature_near =
+        near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519, &signature_bytes)
+            .expect("Signature is not expected to fail on deserialization");
+    log::info!("{:<25} : {}", "signature (hex)", signature);
+    log::info!("{:<25} : {}", "signature", signature_near);
+
     let result = verify_near(&bytes, &public_key, &signature);
     log::info!("result : {:#?}", result);
     assert!(result.is_ok());

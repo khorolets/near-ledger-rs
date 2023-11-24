@@ -5,7 +5,7 @@
 //! - Sign a Transaction
 use ledger_transport::APDUCommand;
 use ledger_transport_hid::{hidapi::HidApi, LedgerHIDError, TransportNativeHID};
-use sha2::{Digest, Sha256};
+use near_primitives_core::hash::CryptoHash;
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
@@ -51,10 +51,14 @@ pub enum NEARLedgerError {
     BufferOverflow(OnlyBlindSigning),
 }
 
-const SHA256_SIZE: usize = 32;
-
 #[derive(Debug, PartialEq, Eq)]
-pub struct OnlyBlindSigning(pub [u8; SHA256_SIZE]);
+pub struct OnlyBlindSigning(pub CryptoHash);
+
+impl OnlyBlindSigning {
+    pub fn hash_bytes(bytes: &[u8]) -> Self {
+        Self(CryptoHash::hash_bytes(bytes))
+    }
+}
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
 fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
@@ -309,7 +313,9 @@ pub fn sign_transaction(
                     let retcode = response.retcode();
 
                     if retcode == SW_BUFFER_OVERFLOW {
-                        return Err(NEARLedgerError::BufferOverflow(compute_hash(&unsigned_tx)));
+                        return Err(NEARLedgerError::BufferOverflow(
+                            OnlyBlindSigning::hash_bytes(&unsigned_tx),
+                        ));
                     }
 
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
@@ -324,17 +330,6 @@ pub fn sign_transaction(
     ))
 }
 
-fn compute_hash(bytes: &[u8]) -> OnlyBlindSigning {
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-
-    let result = hasher.finalize();
-    let mut hash = [0u8; SHA256_SIZE];
-    hash.copy_from_slice(&result[..]);
-
-    OnlyBlindSigning(hash)
-}
-
 pub fn blind_sign_transaction(
     hash: OnlyBlindSigning,
     seed_phrase_hd_path: slip10::BIP32Path,
@@ -345,7 +340,7 @@ pub fn blind_sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(hash.0);
+    data.extend(hash.0 .0);
 
     let command = APDUCommand {
         cla: CLA,
