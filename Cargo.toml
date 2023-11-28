@@ -32,6 +32,5 @@ near-primitives-core = "0.17.0"
 
 [dev-dependencies]
 env_logger = "0.10.0"
-base58 = "0.2.0"
 near-crypto = "0.17.0"
 near-primitives = "0.17.0"

@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use base58::FromBase58;
 use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
 use near_ledger::NEARLedgerError;
@@ -14,12 +13,9 @@ fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction:
     let public_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
         ledger_pub_key.to_bytes(),
     ));
-    let block_hash_str = "Cb3vKNiF3MUuVoqfjuEFCgSNPT79pbuVfXXd2RxDXc5E";
-
-    let block_hash_bytes = block_hash_str.from_base58().unwrap();
-    let mut block_hash: [u8; 32] = [0; 32];
-    block_hash.copy_from_slice(&block_hash_bytes[0..32]);
-    let block_hash = near_primitives::hash::CryptoHash(block_hash);
+    let block_hash = "Cb3vKNiF3MUuVoqfjuEFCgSNPT79pbuVfXXd2RxDXc5E"
+        .parse::<CryptoHash>()
+        .unwrap();
 
     let signer_account_str = hex::encode(&ledger_pub_key.to_bytes());
     let receiver_account_str = "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c";
