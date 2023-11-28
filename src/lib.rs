@@ -62,7 +62,7 @@ pub struct OnlyBlindSigning {
 }
 
 impl OnlyBlindSigning {
-    pub fn hash_bytes(bytes: &[u8]) -> Self {
+    fn hash_bytes(bytes: &[u8]) -> Self {
         Self {
             byte_array: CryptoHash::hash_bytes(bytes),
         }

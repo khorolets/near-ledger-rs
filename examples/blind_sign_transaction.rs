@@ -70,7 +70,9 @@ fn main() -> Result<(), NEARLedgerError> {
     log::info!("bytes len : {}", bytes.len());
     let err = near_ledger::sign_transaction(bytes.clone(), hd_path.clone()).unwrap_err();
 
-    let payload = OnlyBlindSigning::hash_bytes(&bytes);
+    let payload = OnlyBlindSigning {
+        byte_array: CryptoHash::hash_bytes(&bytes),
+    };
     log::info!(
         "{:<25} : {}",
         "hash (hex)",
