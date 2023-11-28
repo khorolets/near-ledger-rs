@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, str::FromStr};
+use std::str::FromStr;
 
 use base58::FromBase58;
 use ed25519_dalek::Signature;
@@ -10,15 +10,10 @@ use near_primitives_core::hash::CryptoHash;
 use near_primitives::borsh::BorshSerialize;
 use slip10::BIP32Path;
 
-fn tx() -> near_primitives::transaction::Transaction {
-    let ledger_pub_key_str = "7be181e38cf773f8432a1af401f83b39f1222bad5a167875abba1baa2de477c7";
-    let receiver_pub_key_str = "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c";
-    let ledger_pub_key_bytes = hex::decode(ledger_pub_key_str).unwrap();
-
-    let ledger_pub_key = near_crypto::PublicKey::ED25519(
-        near_crypto::ED25519PublicKey::try_from(ledger_pub_key_bytes.as_ref()).unwrap(),
-    );
-
+fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction {
+    let public_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
+        ledger_pub_key.to_bytes(),
+    ));
     let block_hash_str = "Cb3vKNiF3MUuVoqfjuEFCgSNPT79pbuVfXXd2RxDXc5E";
 
     let block_hash_bytes = block_hash_str.from_base58().unwrap();
@@ -26,12 +21,15 @@ fn tx() -> near_primitives::transaction::Transaction {
     block_hash.copy_from_slice(&block_hash_bytes[0..32]);
     let block_hash = near_primitives::hash::CryptoHash(block_hash);
 
+    let signer_account_str = hex::encode(&ledger_pub_key.to_bytes());
+    let receiver_account_str = "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c";
+
     near_primitives::transaction::Transaction {
-        public_key: ledger_pub_key,
+        public_key,
         block_hash,
         nonce: 103595482000005,
-        signer_id: AccountId::from_str(ledger_pub_key_str).unwrap(),
-        receiver_id: AccountId::from_str(receiver_pub_key_str).unwrap(),
+        signer_id: AccountId::from_str(&signer_account_str).unwrap(),
+        receiver_id: AccountId::from_str(receiver_account_str).unwrap(),
         actions: vec![near_primitives::transaction::Action::Transfer(
             near_primitives::transaction::TransferAction {
                 deposit: 150000000000000000000000,
@@ -46,7 +44,7 @@ fn main() -> Result<(), NEARLedgerError> {
 
     let public_key = near_ledger::get_public_key(hd_path.clone())?;
 
-    let unsigned_transaction = tx();
+    let unsigned_transaction = tx(public_key);
     log::info!("{:#?}", unsigned_transaction);
 
     let bytes = unsigned_transaction
