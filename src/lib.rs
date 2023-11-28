@@ -4,7 +4,10 @@
 //! - Read PublicKey from Ledger device by HD Path
 //! - Sign a Transaction
 use ledger_transport::APDUCommand;
-use ledger_transport_hid::{hidapi::HidApi, LedgerHIDError, TransportNativeHID};
+use ledger_transport_hid::{
+    hidapi::{HidApi, HidError},
+    LedgerHIDError, TransportNativeHID,
+};
 use near_primitives_core::hash::CryptoHash;
 
 const CLA: u8 = 0x80; // Instruction class
@@ -37,8 +40,10 @@ pub type SignatureBytes = Vec<u8>;
 
 #[derive(Debug)]
 pub enum NEARLedgerError {
-    /// Self-explanatory one
-    DeviceNotFound,
+    /// Error occuring on init of hidapid and getting current devices list
+    HidApiError(HidError),
+    /// Error occuring on creating a new hid transport, connecting to first ledger device found  
+    LedgerHidError(LedgerHIDError),
     /// Error occurred while exchanging with Ledger device
     APDUExchangeError(String),
     /// Blind signature not supported
@@ -81,16 +86,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
     //! Something
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let hidapi = match HidApi::new() {
-        Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
-    };
-    let transport = match TransportNativeHID::new(&hidapi) {
-        Ok(transport) => transport,
-        // TODO: refactor this
-        // https://github.com/Zondax/ledger-rs/issues/65
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
-    };
+    let transport = get_transport()?;
     let command = APDUCommand {
         cla: CLA,
         ins: INS_GET_VERSION,
@@ -167,16 +163,7 @@ pub fn get_public_key(
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let hidapi = match HidApi::new() {
-        Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
-    };
-    let transport = match TransportNativeHID::new(&hidapi) {
-        Ok(transport) => transport,
-        // TODO: refactor this
-        // https://github.com/Zondax/ledger-rs/issues/65
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
-    };
+    let transport = get_transport()?;
 
     // hd_path must be converted into bytes to be sent as `data` to the Ledger
     let hd_path_bytes = hd_path_to_bytes(&hd_path);
@@ -216,16 +203,8 @@ pub fn get_public_key(
 fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
-    let hidapi = match HidApi::new() {
-        Ok(hidapi) => hidapi,
-        Err(_err) => return Err(NEARLedgerError::DeviceNotFound),
-    };
-    match TransportNativeHID::new(&hidapi) {
-        Ok(transport) => Ok(transport),
-        // TODO: refactor this
-        // https://github.com/Zondax/ledger-rs/issues/65
-        Err(_err) => Err(NEARLedgerError::DeviceNotFound),
-    }
+    let hidapi = HidApi::new().map_err(NEARLedgerError::HidApiError)?;
+    TransportNativeHID::new(&hidapi).map_err(NEARLedgerError::LedgerHidError)
 }
 
 /// Sign the transaction. Transaction should be [borsh serialized](https://github.com/near/borsh-rs) `Vec<u8>`
