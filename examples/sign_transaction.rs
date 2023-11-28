@@ -1,8 +1,8 @@
 use std::{convert::TryFrom, str::FromStr};
 
 use base58::FromBase58;
-use ed25519_dalek::{PublicKey, Verifier};
-use ed25519_dalek::{Signature, SignatureError};
+use ed25519_dalek::Signature;
+use ed25519_dalek::Verifier;
 use near_ledger::NEARLedgerError;
 use near_primitives::types::AccountId;
 use near_primitives_core::hash::CryptoHash;
@@ -40,16 +40,6 @@ fn tx() -> near_primitives::transaction::Transaction {
     }
 }
 
-pub fn verify_near(
-    bytes: &[u8],
-    pub_key: &PublicKey,
-    signature: &Signature,
-) -> Result<(), SignatureError> {
-    let hash = CryptoHash::hash_bytes(bytes);
-
-    pub_key.verify(&hash.as_ref(), &signature)
-}
-
 fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
     let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
@@ -71,7 +61,9 @@ fn main() -> Result<(), NEARLedgerError> {
     log::info!("{:<25} : {}", "signature (hex)", signature);
     log::info!("{:<25} : {}", "signature", signature_near);
 
-    assert!(verify_near(&bytes, &public_key, &signature).is_ok());
+    assert!(public_key
+        .verify(&CryptoHash::hash_bytes(&bytes).as_ref(), &signature)
+        .is_ok());
 
     Ok(())
 }

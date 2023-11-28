@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, str::FromStr};
 
 use base58::FromBase58;
-use ed25519_dalek::{PublicKey, Signature, SignatureError, Verifier};
+use ed25519_dalek::{Signature, Verifier};
 use near_ledger::{NEARLedgerError, OnlyBlindSigning};
 use near_primitives::types::AccountId;
 
@@ -46,16 +46,6 @@ fn too_long_tx() -> near_primitives::transaction::Transaction {
     }
 }
 
-pub fn verify_near(
-    bytes: &[u8],
-    pub_key: &PublicKey,
-    signature: &Signature,
-) -> Result<(), SignatureError> {
-    let hash = CryptoHash::hash_bytes(bytes);
-
-    pub_key.verify(&hash.as_ref(), &signature)
-}
-
 fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
     let unsigned_transaction = too_long_tx();
@@ -90,8 +80,8 @@ fn main() -> Result<(), NEARLedgerError> {
     log::info!("{:<25} : {}", "signature (hex)", signature);
     log::info!("{:<25} : {}", "signature", signature_near);
 
-    let result = verify_near(&bytes, &public_key, &signature);
-    log::info!("result : {:#?}", result);
-    assert!(result.is_ok());
+    assert!(public_key
+        .verify(&CryptoHash::hash_bytes(&bytes).as_ref(), &signature)
+        .is_ok());
     Ok(())
 }
