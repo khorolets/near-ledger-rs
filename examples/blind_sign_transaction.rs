@@ -70,12 +70,16 @@ fn main() -> Result<(), NEARLedgerError> {
     log::info!("bytes len : {}", bytes.len());
     let err = near_ledger::sign_transaction(bytes.clone(), hd_path.clone()).unwrap_err();
 
-    let hash = OnlyBlindSigning::hash_bytes(&bytes);
-    log::info!("{:<25} : {}", "hash (hex)", hex::encode(hash.0.as_ref()));
-    log::info!("{:<25} : {}", "hash", hash.0);
-    assert!(matches!(err, NEARLedgerError::BufferOverflow(err_hash) if err_hash == hash));
+    let payload = OnlyBlindSigning::hash_bytes(&bytes);
+    log::info!(
+        "{:<25} : {}",
+        "hash (hex)",
+        hex::encode(payload.byte_array.as_ref())
+    );
+    log::info!("{:<25} : {}", "hash", payload.byte_array);
+    assert!(matches!(err, NEARLedgerError::BufferOverflow(err_hash) if err_hash == payload));
 
-    let signature_bytes = near_ledger::blind_sign_transaction(hash, hd_path)?;
+    let signature_bytes = near_ledger::blind_sign_transaction(payload, hd_path)?;
     let signature = Signature::from_bytes(&signature_bytes).unwrap();
 
     let signature_near =

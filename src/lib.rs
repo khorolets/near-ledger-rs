@@ -57,11 +57,15 @@ pub enum NEARLedgerError {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct OnlyBlindSigning(pub CryptoHash);
+pub struct OnlyBlindSigning {
+    pub byte_array: CryptoHash,
+}
 
 impl OnlyBlindSigning {
     pub fn hash_bytes(bytes: &[u8]) -> Self {
-        Self(CryptoHash::hash_bytes(bytes))
+        Self {
+            byte_array: CryptoHash::hash_bytes(bytes),
+        }
     }
 }
 
@@ -310,7 +314,7 @@ pub fn sign_transaction(
 }
 
 pub fn blind_sign_transaction(
-    hash: OnlyBlindSigning,
+    payload: OnlyBlindSigning,
     seed_phrase_hd_path: slip10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
@@ -319,7 +323,7 @@ pub fn blind_sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(hash.0 .0);
+    data.extend(payload.byte_array.0);
 
     let command = APDUCommand {
         cla: CLA,
