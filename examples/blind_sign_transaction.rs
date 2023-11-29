@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use near_ledger::{NEARLedgerError, OnlyBlindSigning};
+use near_ledger::NEARLedgerError;
 
 use near_primitives_core::hash::CryptoHash;
 use slip10::BIP32Path;
@@ -25,18 +25,12 @@ fn long_tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transac
     tx
 }
 
-fn compute_and_display_hash(bytes: &[u8]) -> OnlyBlindSigning {
+fn compute_and_display_hash(bytes: &[u8]) -> CryptoHash {
     log::info!("---");
     log::info!("SHA-256 hash:");
-    let hash = OnlyBlindSigning {
-        byte_array: CryptoHash::hash_bytes(&bytes),
-    };
-    log::info!(
-        "{:<15} : {}",
-        "hash (hex)",
-        hex::encode(hash.byte_array.as_ref())
-    );
-    log::info!("{:<15} : {}", "hash (base58)", hash.byte_array);
+    let hash = CryptoHash::hash_bytes(&bytes);
+    log::info!("{:<15} : {}", "hash (hex)", hex::encode(hash.as_ref()));
+    log::info!("{:<15} : {}", "hash (base58)", hash);
     log::info!("---");
     hash
 }

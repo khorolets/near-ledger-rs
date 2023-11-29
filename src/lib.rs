@@ -53,20 +53,7 @@ pub enum NEARLedgerError {
     /// Error with transport
     LedgerHIDError(LedgerHIDError),
     /// Transaction is too large to be signed
-    BufferOverflow(OnlyBlindSigning),
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct OnlyBlindSigning {
-    pub byte_array: CryptoHash,
-}
-
-impl OnlyBlindSigning {
-    fn hash_bytes(bytes: &[u8]) -> Self {
-        Self {
-            byte_array: CryptoHash::hash_bytes(bytes),
-        }
-    }
+    BufferOverflow { transaction_hash: CryptoHash },
 }
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
@@ -296,9 +283,9 @@ pub fn sign_transaction(
                     let retcode = response.retcode();
 
                     if retcode == SW_BUFFER_OVERFLOW {
-                        return Err(NEARLedgerError::BufferOverflow(
-                            OnlyBlindSigning::hash_bytes(&unsigned_tx),
-                        ));
+                        return Err(NEARLedgerError::BufferOverflow {
+                            transaction_hash: CryptoHash::hash_bytes(&unsigned_tx),
+                        });
                     }
 
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
@@ -314,7 +301,7 @@ pub fn sign_transaction(
 }
 
 pub fn blind_sign_transaction(
-    payload: OnlyBlindSigning,
+    payload: CryptoHash,
     seed_phrase_hd_path: slip10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
@@ -323,7 +310,7 @@ pub fn blind_sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(payload.byte_array.0);
+    data.extend(payload.0);
 
     let command = APDUCommand {
         cla: CLA,
