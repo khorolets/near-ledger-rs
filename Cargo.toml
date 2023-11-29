@@ -1,6 +1,6 @@
 [package]
 name = "near-ledger"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2018"
 authors = ["Bohdan Khorolets <b@khorolets.com>"]
 description = "Transport library to integrate with NEAR Ledger app"
@@ -17,6 +17,9 @@ name = "get_public_key"
 [[example]]
 name = "sign_transaction"
 
+[[example]]
+name = "blind_sign_transaction"
+
 [dependencies]
 ed25519-dalek = { version = "1" }
 ledger-transport = "0.10.0"
@@ -25,9 +28,9 @@ ledger-apdu = "0.10.0"
 slip10 = "0.4.3"
 log = "0.4.20"
 hex = "0.4.3"
+near-primitives-core = "0.17.0"
 
 [dev-dependencies]
 env_logger = "0.10.0"
-base58 = "0.2.0"
-near-primitives = "0.17.0"
 near-crypto = "0.17.0"
+near-primitives = "0.17.0"

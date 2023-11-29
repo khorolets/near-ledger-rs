@@ -1,8 +1,10 @@
 use std::str::FromStr;
 
-use base58::ToBase58;
 use near_ledger::{get_public_key, NEARLedgerError};
 use slip10::BIP32Path;
+
+#[path = "./common/lib.rs"]
+mod common;
 
 fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
@@ -10,8 +12,7 @@ fn main() -> Result<(), NEARLedgerError> {
 
     let public_key = get_public_key(hd_path)?;
 
-    log::info!("{:?}", public_key);
-    log::info!("ed25519:{}", public_key.as_bytes().to_base58());
+    common::display_pub_key(public_key);
 
     Ok(())
 }

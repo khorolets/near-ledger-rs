@@ -25,3 +25,6 @@ jobs:
       run: sudo apt-get -y install libudev-dev libsystemd-dev
     - name: Check
       run: cargo check --verbose --examples
+    # this compiles doc examples
+    - name: test
+      run: cargo test
