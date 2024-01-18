@@ -4,6 +4,8 @@ use std::str::FromStr;
 use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
 use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
+use near_ledger::NEARLedgerError;
+use slip10::BIP32Path;
 
 pub fn display_pub_key(public_key: ed25519_dalek::PublicKey) {
     log::info!("---");
@@ -73,4 +75,24 @@ pub fn display_and_verify_signature(
         .verify(&CryptoHash::hash_bytes(&msg).as_ref(), &signature)
         .is_ok());
     log::info!("---");
+}
+
+pub fn get_key_sign_and_verify_flow<F>(f_transaction: F) -> Result<(), NEARLedgerError>
+where
+    F: FnOnce(ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction,
+{
+    env_logger::builder().init();
+    let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
+
+    let public_key = near_ledger::get_public_key(hd_path.clone())?;
+    display_pub_key(public_key);
+
+    let unsigned_transaction = f_transaction(public_key);
+
+    let bytes = serialize_and_display_tx(unsigned_transaction);
+    let signature_bytes = near_ledger::sign_transaction(bytes.clone(), hd_path)?;
+
+    display_and_verify_signature(bytes, signature_bytes, public_key);
+
+    Ok(())
 }
