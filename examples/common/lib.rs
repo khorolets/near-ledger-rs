@@ -84,7 +84,7 @@ where
     env_logger::builder().init();
     let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
 
-    let public_key = near_ledger::get_public_key(hd_path.clone())?;
+    let public_key = near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?;
     display_pub_key(public_key);
 
     let unsigned_transaction = f_transaction(public_key);
