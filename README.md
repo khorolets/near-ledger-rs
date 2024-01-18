@@ -91,6 +91,12 @@ RUST_LOG=get_public_key_display,near_ledger=info cargo run --example get_public_
 RUST_LOG=get_public_key_silent,near_ledger=info cargo run --example get_public_key_silent
 ```
 
+### Get WalletID from Ledger
+
+```bash
+RUST_LOG=get_wallet_id,near_ledger=info cargo run --example get_wallet_id
+```
+
 ### Sign a transaction
 
 #### Transfer

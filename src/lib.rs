@@ -12,6 +12,7 @@ use near_primitives_core::hash::CryptoHash;
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
+const INS_GET_WALLET_ID: u8 =  0x05;  // Get Wallet ID
 const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the Ledger
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
 const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
@@ -179,6 +180,49 @@ pub fn get_public_key_with_display_flag(
         cla: CLA,
         ins: INS_GET_PUBLIC_KEY,
         p1, // Instruction parameter 1 (offset)
+        p2: NETWORK_ID,
+        data: hd_path_bytes,
+    };
+    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+
+    match transport.exchange(&command) {
+        Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+            );
+            // Ok means we successfully exchanged with the Ledger
+            // but doesn't mean our request succeeded
+            // we need to check it based on `response.retcode`
+            if response.retcode() == RETURN_CODE_OK {
+                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
+            } else {
+                let retcode = response.retcode();
+
+                let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                return Err(NEARLedgerError::APDUExchangeError(error_string));
+            }
+        }
+        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
+    };
+}
+
+pub fn get_wallet_id(
+    hd_path: slip10::BIP32Path,
+) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
+    // instantiate the connection to Ledger
+    // will return an error if Ledger is not connected
+    let transport = get_transport()?;
+
+    // hd_path must be converted into bytes to be sent as `data` to the Ledger
+    let hd_path_bytes = hd_path_to_bytes(&hd_path);
+
+
+    let command = APDUCommand {
+        cla: CLA,
+        ins: INS_GET_WALLET_ID,
+        p1: 0, // Instruction parameter 1 (offset)
         p2: NETWORK_ID,
         data: hd_path_bytes,
     };

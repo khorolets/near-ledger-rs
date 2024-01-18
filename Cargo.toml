@@ -20,6 +20,10 @@ name = "get_public_key_silent"
 path = "examples/get_public_key/silent.rs"
 
 [[example]]
+name = "get_wallet_id"
+path = "examples/get_wallet_id.rs"
+
+[[example]]
 name = "sign_transfer"
 path = "examples/sign_transaction/transfer.rs"
 
