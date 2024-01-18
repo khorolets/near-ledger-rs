@@ -92,6 +92,12 @@ RUST_LOG=get_public_key,near_ledger=info cargo run --example get_public_key
 RUST_LOG=sign_transfer,near_ledger=info cargo run --example sign_transfer
 ```
 
+#### Multiple transfers
+
+```bash
+RUST_LOG=sign_multiple_transfers,near_ledger=info cargo run --example sign_multiple_transfers
+```
+
 ### Blind sign a transaction
 
 ```bash

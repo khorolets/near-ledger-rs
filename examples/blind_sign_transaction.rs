@@ -16,7 +16,7 @@ fn long_tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transac
         .map(|_el| {
             near_primitives::transaction::Action::Transfer(
                 near_primitives::transaction::TransferAction {
-                    deposit: 150000000000000000000000 * _el as u128,
+                    deposit: 150000000000000000000000 * _el as u128, // 0.15 NEAR
                 },
             )
         })

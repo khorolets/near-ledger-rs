@@ -8,7 +8,7 @@ fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction:
     let mut tx = common::tx_template(ledger_pub_key);
     tx.actions = vec![near_primitives::transaction::Action::Transfer(
         near_primitives::transaction::TransferAction {
-            deposit: 150000000000000000000000,
+            deposit: 150000000000000000000000, // 0.15 NEAR
         },
     )];
     tx
