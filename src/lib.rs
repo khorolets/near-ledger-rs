@@ -21,9 +21,12 @@ const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction = Vec<u8>;
 
-const SIGN_NORMAL: u8 = 0;
-const SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
-const SIGN_BLIND: u8 = 1;
+const P1_GET_PUB_DISPLAY: u8 = 0;
+const P1_GET_PUB_SILENT: u8 = 1;
+
+const P1_SIGN_NORMAL: u8 = 0;
+const P1_SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
+const P1_SIGN_BLIND: u8 = 1;
 
 // this is value from LedgerHQ/app-near repo
 const SW_INCORRECT_P1_P2: u16 = 0x6A86;
@@ -152,6 +155,13 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 pub fn get_public_key(
     hd_path: slip10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
+    get_public_key_with_display_flag(hd_path, true)
+}
+
+pub fn get_public_key_with_display_flag(
+    hd_path: slip10::BIP32Path,
+    display_and_confirm: bool,
+) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let transport = get_transport()?;
@@ -159,10 +169,16 @@ pub fn get_public_key(
     // hd_path must be converted into bytes to be sent as `data` to the Ledger
     let hd_path_bytes = hd_path_to_bytes(&hd_path);
 
+    let p1 = if display_and_confirm {
+        P1_GET_PUB_DISPLAY
+    } else {
+        P1_GET_PUB_SILENT
+    };
+
     let command = APDUCommand {
         cla: CLA,
         ins: INS_GET_PUBLIC_KEY,
-        p1: 0, // Instruction parameter 1 (offset)
+        p1, // Instruction parameter 1 (offset)
         p2: NETWORK_ID,
         data: hd_path_bytes,
     };
@@ -257,9 +273,9 @@ pub fn sign_transaction(
             cla: CLA,
             ins: INS_SIGN_TRANSACTION,
             p1: if is_last_chunk {
-                SIGN_NORMAL_LAST_CHUNK
+                P1_SIGN_NORMAL_LAST_CHUNK
             } else {
-                SIGN_NORMAL
+                P1_SIGN_NORMAL
             }, // Instruction parameter 1 (offset)
             p2: NETWORK_ID,
             data: chunk.to_vec(),
@@ -315,7 +331,7 @@ pub fn blind_sign_transaction(
     let command = APDUCommand {
         cla: CLA,
         ins: INS_SIGN_TRANSACTION,
-        p1: SIGN_BLIND, // Instruction parameter 1 (offset)
+        p1: P1_SIGN_BLIND, // Instruction parameter 1 (offset)
         p2: NETWORK_ID,
         data,
     };

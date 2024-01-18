@@ -12,7 +12,12 @@ keywords = ["ledger", "nearprotocol"]
 name = "get_version"
 
 [[example]]
-name = "get_public_key"
+name = "get_public_key_display"
+path = "examples/get_public_key/display.rs"
+
+[[example]]
+name = "get_public_key_silent"
+path = "examples/get_public_key/silent.rs"
 
 [[example]]
 name = "sign_transfer"

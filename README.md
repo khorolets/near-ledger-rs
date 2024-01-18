@@ -80,8 +80,15 @@ RUST_LOG=get_version,near_ledger=info cargo run --example get_version
 
 ### Get PublicKey from Ledger
 
+#### Display
+
 ```bash
-RUST_LOG=get_public_key,near_ledger=info cargo run --example get_public_key
+RUST_LOG=get_public_key_display,near_ledger=info cargo run --example get_public_key_display
+```
+#### Silent
+
+```bash
+RUST_LOG=get_public_key_silent,near_ledger=info cargo run --example get_public_key_silent
 ```
 
 ### Sign a transaction
