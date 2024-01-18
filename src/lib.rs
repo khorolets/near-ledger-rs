@@ -16,7 +16,7 @@ const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the L
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
 const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
 const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
-const CHUNK_SIZE: usize = 128; // Chunk size to be sent to Ledger
+const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction = Vec<u8>;
