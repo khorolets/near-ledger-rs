@@ -99,6 +99,12 @@ RUST_LOG=get_wallet_id,near_ledger=info cargo run --example get_wallet_id
 
 ### Sign a transaction
 
+#### Create account
+
+```bash
+RUST_LOG=sign_create_account,near_ledger=info cargo run --example sign_create_account
+```
+
 #### Transfer
 
 ```bash
