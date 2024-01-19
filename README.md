@@ -105,6 +105,18 @@ RUST_LOG=get_wallet_id,near_ledger=info cargo run --example get_wallet_id
 RUST_LOG=sign_create_account,near_ledger=info cargo run --example sign_create_account
 ```
 
+#### Delete account (short)
+
+```bash
+RUST_LOG=sign_delete_account_short,near_ledger=info cargo run --example sign_delete_account_short
+```
+
+#### Delete account (long)
+
+```bash
+RUST_LOG=sign_delete_account_long,near_ledger=info cargo run --example sign_delete_account_long
+```
+
 #### Transfer
 
 ```bash

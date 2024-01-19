@@ -36,6 +36,14 @@ name = "sign_create_account"
 path = "examples/sign_transaction/create_account.rs"
 
 [[example]]
+name = "sign_delete_account_short"
+path = "examples/sign_transaction/delete_account_short.rs"
+
+[[example]]
+name = "sign_delete_account_long"
+path = "examples/sign_transaction/delete_account_long.rs"
+
+[[example]]
 name = "blind_sign_transaction"
 
 [dependencies]
@@ -52,3 +60,4 @@ near-primitives-core = "0.20.0"
 env_logger = "0.10.0"
 near-crypto = "0.20.0"
 near-primitives = "0.20.0"
+near-account-id = { version = "1.0.0", features = ["internal_unstable"]}
