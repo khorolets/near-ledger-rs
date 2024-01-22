@@ -117,6 +117,12 @@ RUST_LOG=sign_delete_account_short,near_ledger=info cargo run --example sign_del
 RUST_LOG=sign_delete_account_long,near_ledger=info cargo run --example sign_delete_account_long
 ```
 
+#### Delete key (ed25519)
+
+```bash
+RUST_LOG=sign_delete_key_ed25519,near_ledger=info cargo run --example sign_delete_key_ed25519
+```
+
 #### Transfer
 
 ```bash

@@ -44,6 +44,10 @@ name = "sign_delete_account_long"
 path = "examples/sign_transaction/delete_account_long.rs"
 
 [[example]]
+name = "sign_delete_key_ed25519"
+path = "examples/sign_transaction/delete_key_ed25519.rs"
+
+[[example]]
 name = "blind_sign_transaction"
 
 [dependencies]

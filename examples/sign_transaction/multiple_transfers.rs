@@ -1,6 +1,5 @@
 use near_ledger::NEARLedgerError;
 
-
 #[path = "../common/lib.rs"]
 mod common;
 

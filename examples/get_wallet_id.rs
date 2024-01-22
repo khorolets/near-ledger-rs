@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use near_ledger::{NEARLedgerError, get_wallet_id};
+use near_ledger::{get_wallet_id, NEARLedgerError};
 use slip10::BIP32Path;
 
 #[path = "./common/lib.rs"]

@@ -12,7 +12,7 @@ use near_primitives_core::hash::CryptoHash;
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
-const INS_GET_WALLET_ID: u8 =  0x05;  // Get Wallet ID
+const INS_GET_WALLET_ID: u8 = 0x05; // Get Wallet ID
 const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the Ledger
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
 const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
@@ -217,7 +217,6 @@ pub fn get_wallet_id(
 
     // hd_path must be converted into bytes to be sent as `data` to the Ledger
     let hd_path_bytes = hd_path_to_bytes(&hd_path);
-
 
     let command = APDUCommand {
         cla: CLA,

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use near_ledger::{NEARLedgerError, get_public_key_with_display_flag};
+use near_ledger::{get_public_key_with_display_flag, NEARLedgerError};
 use slip10::BIP32Path;
 
 #[path = "../common/lib.rs"]
