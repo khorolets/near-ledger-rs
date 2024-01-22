@@ -28,9 +28,9 @@ ledger-apdu = "0.10.0"
 slip10 = "0.4.3"
 log = "0.4.20"
 hex = "0.4.3"
-near-primitives-core = "0.17.0"
+near-primitives-core = "0.20.0"
 
 [dev-dependencies]
 env_logger = "0.10.0"
-near-crypto = "0.17.0"
-near-primitives = "0.17.0"
+near-crypto = "0.20.0"
+near-primitives = "0.20.0"

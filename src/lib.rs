@@ -214,14 +214,14 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 ///
 /// ```no_run
 /// use near_ledger::sign_transaction;
-/// use near_primitives::borsh::BorshSerialize;
+/// use near_primitives::{borsh, borsh::BorshSerialize};
 /// use slip10::BIP32Path;
 /// use std::str::FromStr;
 ///
 /// # fn main() {
 /// # let near_unsigned_transaction = [10; 250];
 /// let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
-/// let borsh_transaction = near_unsigned_transaction.try_to_vec().unwrap();
+/// let borsh_transaction = borsh::to_vec(&near_unsigned_transaction).unwrap();
 /// let signature = sign_transaction(borsh_transaction, hd_path).unwrap();
 /// println!("{:#?}", signature);
 /// # }
