@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
-use near_primitives_core::{borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
+use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
 
 pub fn display_pub_key(public_key: ed25519_dalek::PublicKey) {
     log::info!("---");
@@ -47,9 +47,8 @@ pub fn serialize_and_display_tx(transaction: near_primitives::transaction::Trans
     log::info!("---");
     log::info!("Transaction:");
     log::info!("{:#?}", transaction);
-    let bytes = transaction
-        .try_to_vec()
-        .expect("Transaction is not expected to fail on serialization");
+    let bytes =
+        borsh::to_vec(&transaction).expect("Transaction is not expected to fail on serialization");
     log::info!("transaction byte array length: {}", bytes.len());
     log::info!("---");
     bytes
