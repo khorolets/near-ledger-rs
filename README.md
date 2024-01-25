@@ -123,6 +123,12 @@ RUST_LOG=sign_delete_account_long,near_ledger=info cargo run --example sign_dele
 RUST_LOG=sign_delete_key_ed25519,near_ledger=info cargo run --example sign_delete_key_ed25519
 ```
 
+#### Delete key (secp256k1)
+
+```bash
+RUST_LOG=sign_delete_key_secp256k1,near_ledger=info cargo run --example sign_delete_key_secp256k1
+```
+
 #### Transfer
 
 ```bash
