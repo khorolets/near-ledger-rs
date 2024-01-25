@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
-use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
 use near_ledger::NEARLedgerError;
+use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
 use slip10::BIP32Path;
 
 pub fn display_pub_key(public_key: ed25519_dalek::PublicKey) {

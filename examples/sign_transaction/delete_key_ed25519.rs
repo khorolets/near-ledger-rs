@@ -11,9 +11,9 @@ fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction:
         &format!("{:?}", ledger_pub_key),
     );
     let public_key = sk.public_key();
-    tx.actions = vec![near_primitives::transaction::Action::DeleteKey(
+    tx.actions = vec![near_primitives::transaction::Action::DeleteKey(Box::new(
         near_primitives::transaction::DeleteKeyAction { public_key },
-    )];
+    ))];
     tx
 }
 
