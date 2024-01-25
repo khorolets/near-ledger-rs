@@ -129,6 +129,12 @@ RUST_LOG=sign_delete_key_ed25519,near_ledger=info cargo run --example sign_delet
 RUST_LOG=sign_delete_key_secp256k1,near_ledger=info cargo run --example sign_delete_key_secp256k1
 ```
 
+#### Stake
+
+```bash
+RUST_LOG=sign_stake,near_ledger=info cargo run --example sign_stake
+```
+
 #### Transfer
 
 ```bash

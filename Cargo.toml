@@ -52,6 +52,10 @@ name = "sign_delete_key_secp256k1"
 path = "examples/sign_transaction/delete_key_secp256k1.rs"
 
 [[example]]
+name = "sign_stake"
+path = "examples/sign_transaction/stake.rs"
+
+[[example]]
 name = "blind_sign_transaction"
 
 [dependencies]
