@@ -56,6 +56,10 @@ name = "sign_stake"
 path = "examples/sign_transaction/stake.rs"
 
 [[example]]
+name = "sign_add_key_fullaccess"
+path = "examples/sign_transaction/add_key_fullaccess.rs"
+
+[[example]]
 name = "blind_sign_transaction"
 
 [dependencies]

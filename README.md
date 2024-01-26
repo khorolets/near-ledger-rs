@@ -135,6 +135,12 @@ RUST_LOG=sign_delete_key_secp256k1,near_ledger=info cargo run --example sign_del
 RUST_LOG=sign_stake,near_ledger=info cargo run --example sign_stake
 ```
 
+#### Add key (full access)
+
+```bash
+RUST_LOG=sign_add_key_fullaccess,near_ledger=info cargo run --example sign_add_key_fullaccess
+```
+
 #### Transfer
 
 ```bash
