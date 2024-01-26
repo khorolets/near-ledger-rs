@@ -141,6 +141,12 @@ RUST_LOG=sign_stake,near_ledger=info cargo run --example sign_stake
 RUST_LOG=sign_add_key_fullaccess,near_ledger=info cargo run --example sign_add_key_fullaccess
 ```
 
+#### Add key (function call)
+
+```bash
+RUST_LOG=sign_add_key_functioncall,near_ledger=info cargo run --example sign_add_key_functioncall
+```
+
 #### Transfer
 
 ```bash
