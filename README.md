@@ -147,6 +147,12 @@ RUST_LOG=sign_add_key_fullaccess,near_ledger=info cargo run --example sign_add_k
 RUST_LOG=sign_add_key_functioncall,near_ledger=info cargo run --example sign_add_key_functioncall
 ```
 
+#### Deploy contract
+
+```bash
+RUST_LOG=sign_deploy_contract,near_ledger=info cargo run --example sign_deploy_contract
+```
+
 #### Transfer
 
 ```bash
