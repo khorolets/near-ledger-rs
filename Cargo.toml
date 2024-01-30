@@ -67,6 +67,9 @@ path = "examples/sign_transaction/add_key_functioncall.rs"
 name = "sign_deploy_contract"
 path = "examples/sign_transaction/deploy_contract.rs"
 
+[[example]]
+name = "sign_functioncall_str"
+path = "examples/sign_transaction/functioncall_str.rs"
 
 [[example]]
 name = "blind_sign_transaction"
