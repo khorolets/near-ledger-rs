@@ -159,6 +159,12 @@ RUST_LOG=sign_deploy_contract,near_ledger=info cargo run --example sign_deploy_c
 RUST_LOG=sign_functioncall_str,near_ledger=info cargo run --example sign_functioncall_str
 ```
 
+#### Function call (bin arg)
+
+```bash
+RUST_LOG=sign_functioncall_bin,near_ledger=info cargo run --example sign_functioncall_bin
+```
+
 #### Transfer
 
 ```bash
