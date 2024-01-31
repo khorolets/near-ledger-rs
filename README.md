@@ -182,6 +182,11 @@ RUST_LOG=sign_transfer,near_ledger=info cargo run --example sign_transfer
 ```bash
 RUST_LOG=sign_multiple_transfers,near_ledger=info cargo run --example sign_multiple_transfers
 ```
+### Sign a NEP-413 message
+
+```bash
+RUST_LOG=sign_nep_413_message,near_ledger=info cargo run --example sign_nep_413_message
+```
 
 ### Blind sign a transaction
 

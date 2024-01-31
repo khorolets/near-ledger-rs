@@ -80,6 +80,10 @@ name = "sign_delegate"
 path = "examples/sign_transaction/delegate.rs"
 
 [[example]]
+name = "sign_nep_413_message"
+path = "examples/sign_nep_413_message.rs"
+
+[[example]]
 name = "blind_sign_transaction"
 
 [dependencies]
