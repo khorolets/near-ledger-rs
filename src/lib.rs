@@ -8,6 +8,7 @@ use ledger_transport_hid::{
     hidapi::{HidApi, HidError},
     LedgerHIDError, TransportNativeHID,
 };
+use near_primitives::action::delegate::DelegateAction;
 use near_primitives_core::{
     borsh::{self, BorshSerialize},
     hash::CryptoHash,
@@ -19,6 +20,7 @@ const INS_GET_WALLET_ID: u8 = 0x05; // Get Wallet ID
 const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the Ledger
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
 const INS_SIGN_NEP413_MESSAGE: u8 = 7; // Instruction code to sign a nep-413 message with Ledger
+const INS_SIGN_NEP366_DELEGATE_ACTION: u8 = 8; // Instruction code to sign a nep-413 message with Ledger
 const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
 const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
 const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
@@ -392,6 +394,64 @@ pub fn sign_message_nep413(
         let command = APDUCommand {
             cla: CLA,
             ins: INS_SIGN_NEP413_MESSAGE,
+            p1: if is_last_chunk {
+                P1_SIGN_NORMAL_LAST_CHUNK
+            } else {
+                P1_SIGN_NORMAL
+            }, // Instruction parameter 1 (offset)
+            p2: NETWORK_ID,
+            data: chunk.to_vec(),
+        };
+        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        match transport.exchange(&command) {
+            Ok(response) => {
+                log::info!(
+                    "APDU out: {}\nAPDU ret code: {:x}",
+                    hex::encode(response.apdu_data()),
+                    response.retcode(),
+                );
+                // Ok means we successfully exchanged with the Ledger
+                // but doesn't mean our request succeeded
+                // we need to check it based on `response.retcode`
+                if response.retcode() == RETURN_CODE_OK {
+                    if is_last_chunk {
+                        return Ok(response.data().to_vec());
+                    }
+                } else {
+                    let retcode = response.retcode();
+
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    return Err(NEARLedgerError::APDUExchangeError(error_string));
+                }
+            }
+            Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
+        };
+    }
+    Err(NEARLedgerError::APDUExchangeError(
+        "Unable to process request".to_owned(),
+    ))
+}
+
+pub fn sign_message_nep366_delegate_action(
+    payload: &DelegateAction,
+    seed_phrase_hd_path: slip10::BIP32Path,
+) -> Result<SignatureBytes, NEARLedgerError> {
+    let transport = get_transport()?;
+    // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
+    let hd_path_bytes = hd_path_to_bytes(&seed_phrase_hd_path);
+
+    let mut data: Vec<u8> = vec![];
+    data.extend(hd_path_bytes);
+    data.extend_from_slice(&borsh::to_vec(payload).unwrap());
+
+    let chunks = data.chunks(CHUNK_SIZE);
+    let chunks_count = chunks.len();
+
+    for (i, chunk) in chunks.enumerate() {
+        let is_last_chunk = chunks_count == i + 1;
+        let command = APDUCommand {
+            cla: CLA,
+            ins: INS_SIGN_NEP366_DELEGATE_ACTION,
             p1: if is_last_chunk {
                 P1_SIGN_NORMAL_LAST_CHUNK
             } else {

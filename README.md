@@ -188,6 +188,12 @@ RUST_LOG=sign_multiple_transfers,near_ledger=info cargo run --example sign_multi
 RUST_LOG=sign_nep_413_message,near_ledger=info cargo run --example sign_nep_413_message
 ```
 
+### Sign a NEP-366 delegate action
+
+```bash
+RUST_LOG=sign_nep_366_delegate_action,near_ledger=info cargo run --example sign_nep_366_delegate_action
+```
+
 ### Blind sign a transaction
 
 ```bash
