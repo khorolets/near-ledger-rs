@@ -7,21 +7,39 @@ use near_primitives::{
     action::delegate::{DelegateAction, SignedDelegateAction},
     signable_message::{SignableMessage, SignableMessageType},
 };
+use near_primitives_core::hash::CryptoHash;
 
 #[path = "../common/lib.rs"]
 mod common;
 
 fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction {
-    let mut tx = common::tx_template(ledger_pub_key);
+    let sender_id = AccountId::from_str("bob.near").unwrap();
+
+    let transaction_public_key = near_crypto::PublicKey::ED25519(
+        near_crypto::ED25519PublicKey::from(ledger_pub_key.to_bytes()),
+    );
+    let block_hash = "Cb3vKNiF3MUuVoqfjuEFCgSNPT79pbuVfXXd2RxDXc5E"
+        .parse::<CryptoHash>()
+        .unwrap();
+
+    let signer_account_str = hex::encode(&ledger_pub_key.to_bytes());
+
+    let mut tx = near_primitives::transaction::Transaction {
+        public_key: transaction_public_key,
+        block_hash,
+        nonce: 103595482000005,
+        signer_id: AccountId::from_str(&signer_account_str).unwrap(),
+        receiver_id: sender_id.clone(),
+        actions: vec![],
+    };
 
     let sk = SecretKey::from_seed(
         near_crypto::KeyType::ED25519,
         &format!("{:?}", ledger_pub_key),
     );
 
-    let sender_id = AccountId::from_str("bob.near").unwrap();
     let signer = InMemorySigner::from_secret_key(sender_id.clone(), sk.clone());
-    let public_key = sk.public_key();
+    let delegate_public_key = sk.public_key();
 
     const SIZE: usize = 3;
     let transfers = (0..SIZE)
@@ -41,7 +59,7 @@ fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction:
         actions: transfers,
         nonce: 127127122121,
         max_block_height: 100500,
-        public_key,
+        public_key: delegate_public_key,
     };
     let signable_message =
         SignableMessage::new(&delegate_action, SignableMessageType::DelegateAction);
