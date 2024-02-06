@@ -72,6 +72,10 @@ name = "sign_functioncall_bin"
 path = "examples/sign_transaction/functioncall_bin.rs"
 
 [[example]]
+name = "sign_functioncall_str_parse_err"
+path = "examples/sign_transaction/functioncall_str_parse_err.rs"
+
+[[example]]
 name = "sign_nep_413_message"
 path = "examples/sign_nep_413_message.rs"
 
