@@ -28,10 +28,6 @@ name = "sign_transfer"
 path = "examples/sign_transaction/transfer.rs"
 
 [[example]]
-name = "sign_multiple_transfers"
-path = "examples/sign_transaction/multiple_transfers.rs"
-
-[[example]]
 name = "sign_create_account"
 path = "examples/sign_transaction/create_account.rs"
 
@@ -74,10 +70,6 @@ path = "examples/sign_transaction/functioncall_str.rs"
 [[example]]
 name = "sign_functioncall_bin"
 path = "examples/sign_transaction/functioncall_bin.rs"
-
-[[example]]
-name = "sign_delegate"
-path = "examples/sign_transaction/delegate.rs"
 
 [[example]]
 name = "sign_nep_413_message"
