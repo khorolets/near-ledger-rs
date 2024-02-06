@@ -47,7 +47,7 @@ fn main() -> Result<(), NEARLedgerError> {
     display_pub_key(public_key);
 
     let msg = NEP413Payload {
-        messsage: "Makes it possible to authenticate users without having to add new access keys. This will improve UX, save money and will not increase the on-chain storage of the users' accounts.".to_string(),
+        messsage: "Makes it possible to authenticate users without having to add new access keys. This will improve UX, save money and will not increase the on-chain storage of the users' accounts./Makes it possible to authenticate users without having to add new access keys. This will improve UX, save money and will not increase the on-chain storage of the users' accounts./Makes it possible to authenticate users without having to add new access keys. This will improve UX, save money and will not increase the on-chain storage of the users' accounts.".to_string(),
         nonce: [42; 32],
         recipient: "alice.near".to_string(),
         callback_url: Some("myapp.com/callback".to_string()) 

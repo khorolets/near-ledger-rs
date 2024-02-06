@@ -224,12 +224,7 @@ pub fn serialize_and_display_tx(transaction: near_primitives::transaction::Trans
     log::info!("---");
     bytes
 }
-
-pub fn display_and_verify_signature(
-    msg: Vec<u8>,
-    signature_bytes: Vec<u8>,
-    public_key: ed25519_dalek::PublicKey,
-) {
+pub fn display_signature(signature_bytes: Vec<u8>) -> ed25519_dalek::Signature {
     log::info!("---");
     log::info!("Signature:");
     let signature = Signature::from_bytes(&signature_bytes).unwrap();
@@ -239,7 +234,15 @@ pub fn display_and_verify_signature(
             .expect("Signature is not expected to fail on deserialization");
     log::info!("{:<20} : {}", "signature (hex)", signature);
     log::info!("{:<20} : {}", "signature (base58)", signature_near);
+    signature
+}
 
+pub fn display_and_verify_signature(
+    msg: Vec<u8>,
+    signature_bytes: Vec<u8>,
+    public_key: ed25519_dalek::PublicKey,
+) {
+    let signature = display_signature(signature_bytes);
     assert!(public_key
         .verify(&CryptoHash::hash_bytes(&msg).as_ref(), &signature)
         .is_ok());
@@ -253,15 +256,15 @@ where
     env_logger::builder().init();
     let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
 
-    let public_key = near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?;
-    display_pub_key(public_key);
+    let ledger_pub_key = near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?;
+    display_pub_key(ledger_pub_key);
 
-    let unsigned_transaction = f_transaction(public_key);
+    let unsigned_transaction = f_transaction(ledger_pub_key);
 
     let bytes = serialize_and_display_tx(unsigned_transaction);
     let signature_bytes = near_ledger::sign_transaction(bytes.clone(), hd_path)?;
 
-    display_and_verify_signature(bytes, signature_bytes, public_key);
+    display_and_verify_signature(bytes, signature_bytes, ledger_pub_key);
 
     Ok(())
 }
