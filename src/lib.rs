@@ -77,6 +77,19 @@ fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
         .collect::<Vec<u8>>()
 }
 
+#[inline(always)]
+fn log_command(index: usize, is_last_chunk: bool, command: &APDUCommand<Vec<u8>>) {
+    log::info!(
+        "APDU  in{}: {}",
+        if is_last_chunk {
+            " (last)".to_string()
+        } else {
+            format!(" ({})", index)
+        },
+        hex::encode(&command.serialize())
+    );
+}
+
 /// Get the version of NEAR App installed on Ledger
 ///
 /// # Returns
@@ -329,7 +342,7 @@ pub fn sign_transaction(
             p2: NETWORK_ID,
             data: chunk.to_vec(),
         };
-        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        log_command(i, is_last_chunk, &command);
         match transport.exchange(&command) {
             Ok(response) => {
                 log::info!(
@@ -402,7 +415,7 @@ pub fn sign_message_nep413(
             p2: NETWORK_ID,
             data: chunk.to_vec(),
         };
-        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        log_command(i, is_last_chunk, &command);
         match transport.exchange(&command) {
             Ok(response) => {
                 log::info!(
@@ -460,7 +473,7 @@ pub fn sign_message_nep366_delegate_action(
             p2: NETWORK_ID,
             data: chunk.to_vec(),
         };
-        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        log_command(i, is_last_chunk, &command);
         match transport.exchange(&command) {
             Ok(response) => {
                 log::info!(
