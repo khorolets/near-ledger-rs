@@ -18,7 +18,6 @@ fn main() -> Result<(), NEARLedgerError> {
     let ledger_pub_key = near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?;
     display_pub_key(ledger_pub_key);
 
-
     let sender_id = AccountId::from_str("bob.near").unwrap();
 
     let actions = common::batch_of_all_types_of_actions(ledger_pub_key)
@@ -26,8 +25,9 @@ fn main() -> Result<(), NEARLedgerError> {
         .map(|action| action.try_into().unwrap())
         .collect::<Vec<_>>();
 
-    let ledger_pub_key =
-        near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(ledger_pub_key.to_bytes()));
+    let ledger_pub_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
+        ledger_pub_key.to_bytes(),
+    ));
 
     let delegate_action = DelegateAction {
         sender_id,

@@ -9,10 +9,7 @@ use ledger_transport_hid::{
     LedgerHIDError, TransportNativeHID,
 };
 use near_primitives::action::delegate::DelegateAction;
-use near_primitives_core::{
-    borsh::{self, BorshSerialize},
-    hash::CryptoHash,
-};
+use near_primitives_core::borsh::{self, BorshSerialize};
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
@@ -33,15 +30,6 @@ const P1_GET_PUB_SILENT: u8 = 1;
 
 const P1_SIGN_NORMAL: u8 = 0;
 const P1_SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
-const P1_SIGN_BLIND: u8 = 1;
-
-// this is value from LedgerHQ/app-near repo
-const SW_INCORRECT_P1_P2: u16 = 0x6A86;
-// this is value from LedgerHQ/app-near repo
-const SW_BUFFER_OVERFLOW: u16 = 0x6990;
-
-// this is value from LedgerHQ/app-near repo
-const SW_SETTING_BLIND_DISABLED: u16 = 0x6192;
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type NEARLedgerAppVersion = Vec<u8>;
@@ -56,14 +44,8 @@ pub enum NEARLedgerError {
     LedgerHidError(LedgerHIDError),
     /// Error occurred while exchanging with Ledger device
     APDUExchangeError(String),
-    /// Blind signature not supported
-    BlindSignatureNotSupported,
-    /// Blind signature disabled in ledger's app settings
-    BlindSignatureDisabled,
     /// Error with transport
     LedgerHIDError(LedgerHIDError),
-    /// Transaction is too large to be signed
-    BufferOverflow { transaction_hash: CryptoHash },
 }
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
@@ -360,12 +342,6 @@ pub fn sign_transaction(
                 } else {
                     let retcode = response.retcode();
 
-                    if retcode == SW_BUFFER_OVERFLOW {
-                        return Err(NEARLedgerError::BufferOverflow {
-                            transaction_hash: CryptoHash::hash_bytes(&unsigned_tx),
-                        });
-                    }
-
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
                     return Err(NEARLedgerError::APDUExchangeError(error_string));
                 }
@@ -501,52 +477,4 @@ pub fn sign_message_nep366_delegate_action(
     Err(NEARLedgerError::APDUExchangeError(
         "Unable to process request".to_owned(),
     ))
-}
-pub fn blind_sign_transaction(
-    payload: CryptoHash,
-    seed_phrase_hd_path: slip10::BIP32Path,
-) -> Result<SignatureBytes, NEARLedgerError> {
-    let transport = get_transport()?;
-    // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
-    let hd_path_bytes = hd_path_to_bytes(&seed_phrase_hd_path);
-
-    let mut data: Vec<u8> = vec![];
-    data.extend(hd_path_bytes);
-    data.extend(payload.0);
-
-    let command = APDUCommand {
-        cla: CLA,
-        ins: INS_SIGN_TRANSACTION,
-        p1: P1_SIGN_BLIND, // Instruction parameter 1 (offset)
-        p2: NETWORK_ID,
-        data,
-    };
-    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
-    match transport.exchange(&command) {
-        Ok(response) => {
-            log::info!(
-                "APDU out: {}\nAPDU ret code: {:x}",
-                hex::encode(response.apdu_data()),
-                response.retcode(),
-            );
-            // Ok means we successfully exchanged with the Ledger
-            // but doesn't mean our request succeeded
-            // we need to check it based on `response.retcode`
-            if response.retcode() == RETURN_CODE_OK {
-                Ok(response.data().to_vec())
-            } else {
-                let retcode = response.retcode();
-                if retcode == SW_INCORRECT_P1_P2 {
-                    return Err(NEARLedgerError::BlindSignatureNotSupported);
-                }
-                if retcode == SW_SETTING_BLIND_DISABLED {
-                    return Err(NEARLedgerError::BlindSignatureDisabled);
-                }
-
-                let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
-                Err(NEARLedgerError::APDUExchangeError(error_string))
-            }
-        }
-        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
-    }
 }

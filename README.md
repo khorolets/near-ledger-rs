@@ -134,9 +134,3 @@ RUST_LOG=info cargo run --example sign_nep_413_message
 ```bash
 RUST_LOG=info cargo run --example sign_nep_366_delegate_action
 ```
-
-### Blind sign a transaction
-
-```bash
-RUST_LOG=info cargo run --example blind_sign_transaction
-```

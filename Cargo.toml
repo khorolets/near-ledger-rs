@@ -1,6 +1,6 @@
 [package]
 name = "near-ledger"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2018"
 authors = ["Bohdan Khorolets <b@khorolets.com>"]
 description = "Transport library to integrate with NEAR Ledger app"
@@ -86,9 +86,6 @@ path = "examples/sign_nep_413_message.rs"
 [[example]]
 name = "sign_nep_366_delegate_action"
 path = "examples/sign_nep_366_delegate_action.rs"
-
-[[example]]
-name = "blind_sign_transaction"
 
 [dependencies]
 ed25519-dalek = { version = "1" }
