@@ -8,30 +8,28 @@ use ledger_transport_hid::{
     hidapi::{HidApi, HidError},
     LedgerHIDError, TransportNativeHID,
 };
-use near_primitives_core::hash::CryptoHash;
+use near_primitives::action::delegate::DelegateAction;
+use near_primitives_core::borsh::{self, BorshSerialize};
 
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
+const INS_GET_WALLET_ID: u8 = 0x05; // Get Wallet ID
 const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the Ledger
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
+const INS_SIGN_NEP413_MESSAGE: u8 = 7; // Instruction code to sign a nep-413 message with Ledger
+const INS_SIGN_NEP366_DELEGATE_ACTION: u8 = 8; // Instruction code to sign a nep-413 message with Ledger
 const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
 const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
-const CHUNK_SIZE: usize = 128; // Chunk size to be sent to Ledger
+const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction = Vec<u8>;
 
-const SIGN_NORMAL: u8 = 0;
-const SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
-const SIGN_BLIND: u8 = 1;
+const P1_GET_PUB_DISPLAY: u8 = 0;
+const P1_GET_PUB_SILENT: u8 = 1;
 
-// this is value from LedgerHQ/app-near repo
-const SW_INCORRECT_P1_P2: u16 = 0x6A86;
-// this is value from LedgerHQ/app-near repo
-const SW_BUFFER_OVERFLOW: u16 = 0x6990;
-
-// this is value from LedgerHQ/app-near repo
-const SW_SETTING_BLIND_DISABLED: u16 = 0x6192;
+const P1_SIGN_NORMAL: u8 = 0;
+const P1_SIGN_NORMAL_LAST_CHUNK: u8 = 0x80;
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type NEARLedgerAppVersion = Vec<u8>;
@@ -46,14 +44,8 @@ pub enum NEARLedgerError {
     LedgerHidError(LedgerHIDError),
     /// Error occurred while exchanging with Ledger device
     APDUExchangeError(String),
-    /// Blind signature not supported
-    BlindSignatureNotSupported,
-    /// Blind signature disabled in ledger's app settings
-    BlindSignatureDisabled,
     /// Error with transport
     LedgerHIDError(LedgerHIDError),
-    /// Transaction is too large to be signed
-    BufferOverflow { transaction_hash: CryptoHash },
 }
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
@@ -65,6 +57,19 @@ fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
         })
         .flatten()
         .collect::<Vec<u8>>()
+}
+
+#[inline(always)]
+fn log_command(index: usize, is_last_chunk: bool, command: &APDUCommand<Vec<u8>>) {
+    log::info!(
+        "APDU  in{}: {}",
+        if is_last_chunk {
+            " (last)".to_string()
+        } else {
+            format!(" ({})", index)
+        },
+        hex::encode(&command.serialize())
+    );
 }
 
 /// Get the version of NEAR App installed on Ledger
@@ -152,6 +157,61 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 pub fn get_public_key(
     hd_path: slip10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
+    get_public_key_with_display_flag(hd_path, true)
+}
+
+pub fn get_public_key_with_display_flag(
+    hd_path: slip10::BIP32Path,
+    display_and_confirm: bool,
+) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
+    // instantiate the connection to Ledger
+    // will return an error if Ledger is not connected
+    let transport = get_transport()?;
+
+    // hd_path must be converted into bytes to be sent as `data` to the Ledger
+    let hd_path_bytes = hd_path_to_bytes(&hd_path);
+
+    let p1 = if display_and_confirm {
+        P1_GET_PUB_DISPLAY
+    } else {
+        P1_GET_PUB_SILENT
+    };
+
+    let command = APDUCommand {
+        cla: CLA,
+        ins: INS_GET_PUBLIC_KEY,
+        p1, // Instruction parameter 1 (offset)
+        p2: NETWORK_ID,
+        data: hd_path_bytes,
+    };
+    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+
+    match transport.exchange(&command) {
+        Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+            );
+            // Ok means we successfully exchanged with the Ledger
+            // but doesn't mean our request succeeded
+            // we need to check it based on `response.retcode`
+            if response.retcode() == RETURN_CODE_OK {
+                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
+            } else {
+                let retcode = response.retcode();
+
+                let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                return Err(NEARLedgerError::APDUExchangeError(error_string));
+            }
+        }
+        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
+    };
+}
+
+pub fn get_wallet_id(
+    hd_path: slip10::BIP32Path,
+) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let transport = get_transport()?;
@@ -161,7 +221,7 @@ pub fn get_public_key(
 
     let command = APDUCommand {
         cla: CLA,
-        ins: INS_GET_PUBLIC_KEY,
+        ins: INS_GET_WALLET_ID,
         p1: 0, // Instruction parameter 1 (offset)
         p2: NETWORK_ID,
         data: hd_path_bytes,
@@ -257,14 +317,14 @@ pub fn sign_transaction(
             cla: CLA,
             ins: INS_SIGN_TRANSACTION,
             p1: if is_last_chunk {
-                SIGN_NORMAL_LAST_CHUNK
+                P1_SIGN_NORMAL_LAST_CHUNK
             } else {
-                SIGN_NORMAL
+                P1_SIGN_NORMAL
             }, // Instruction parameter 1 (offset)
             p2: NETWORK_ID,
             data: chunk.to_vec(),
         };
-        log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+        log_command(i, is_last_chunk, &command);
         match transport.exchange(&command) {
             Ok(response) => {
                 log::info!(
@@ -282,11 +342,72 @@ pub fn sign_transaction(
                 } else {
                     let retcode = response.retcode();
 
-                    if retcode == SW_BUFFER_OVERFLOW {
-                        return Err(NEARLedgerError::BufferOverflow {
-                            transaction_hash: CryptoHash::hash_bytes(&unsigned_tx),
-                        });
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    return Err(NEARLedgerError::APDUExchangeError(error_string));
+                }
+            }
+            Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
+        };
+    }
+    Err(NEARLedgerError::APDUExchangeError(
+        "Unable to process request".to_owned(),
+    ))
+}
+
+#[derive(Debug, BorshSerialize)]
+#[borsh(crate = "near_primitives_core::borsh")]
+pub struct NEP413Payload {
+    pub messsage: String,
+    pub nonce: [u8; 32],
+    pub recipient: String,
+    pub callback_url: Option<String>,
+}
+
+pub fn sign_message_nep413(
+    payload: &NEP413Payload,
+    seed_phrase_hd_path: slip10::BIP32Path,
+) -> Result<SignatureBytes, NEARLedgerError> {
+    let transport = get_transport()?;
+    // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
+    let hd_path_bytes = hd_path_to_bytes(&seed_phrase_hd_path);
+
+    let mut data: Vec<u8> = vec![];
+    data.extend(hd_path_bytes);
+    data.extend_from_slice(&borsh::to_vec(payload).unwrap());
+
+    let chunks = data.chunks(CHUNK_SIZE);
+    let chunks_count = chunks.len();
+
+    for (i, chunk) in chunks.enumerate() {
+        let is_last_chunk = chunks_count == i + 1;
+        let command = APDUCommand {
+            cla: CLA,
+            ins: INS_SIGN_NEP413_MESSAGE,
+            p1: if is_last_chunk {
+                P1_SIGN_NORMAL_LAST_CHUNK
+            } else {
+                P1_SIGN_NORMAL
+            }, // Instruction parameter 1 (offset)
+            p2: NETWORK_ID,
+            data: chunk.to_vec(),
+        };
+        log_command(i, is_last_chunk, &command);
+        match transport.exchange(&command) {
+            Ok(response) => {
+                log::info!(
+                    "APDU out: {}\nAPDU ret code: {:x}",
+                    hex::encode(response.apdu_data()),
+                    response.retcode(),
+                );
+                // Ok means we successfully exchanged with the Ledger
+                // but doesn't mean our request succeeded
+                // we need to check it based on `response.retcode`
+                if response.retcode() == RETURN_CODE_OK {
+                    if is_last_chunk {
+                        return Ok(response.data().to_vec());
                     }
+                } else {
+                    let retcode = response.retcode();
 
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
                     return Err(NEARLedgerError::APDUExchangeError(error_string));
@@ -300,8 +421,8 @@ pub fn sign_transaction(
     ))
 }
 
-pub fn blind_sign_transaction(
-    payload: CryptoHash,
+pub fn sign_message_nep366_delegate_action(
+    payload: &DelegateAction,
     seed_phrase_hd_path: slip10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
@@ -310,41 +431,50 @@ pub fn blind_sign_transaction(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend(payload.0);
+    data.extend_from_slice(&borsh::to_vec(payload).unwrap());
 
-    let command = APDUCommand {
-        cla: CLA,
-        ins: INS_SIGN_TRANSACTION,
-        p1: SIGN_BLIND, // Instruction parameter 1 (offset)
-        p2: NETWORK_ID,
-        data,
-    };
-    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
-    match transport.exchange(&command) {
-        Ok(response) => {
-            log::info!(
-                "APDU out: {}\nAPDU ret code: {:x}",
-                hex::encode(response.apdu_data()),
-                response.retcode(),
-            );
-            // Ok means we successfully exchanged with the Ledger
-            // but doesn't mean our request succeeded
-            // we need to check it based on `response.retcode`
-            if response.retcode() == RETURN_CODE_OK {
-                Ok(response.data().to_vec())
+    let chunks = data.chunks(CHUNK_SIZE);
+    let chunks_count = chunks.len();
+
+    for (i, chunk) in chunks.enumerate() {
+        let is_last_chunk = chunks_count == i + 1;
+        let command = APDUCommand {
+            cla: CLA,
+            ins: INS_SIGN_NEP366_DELEGATE_ACTION,
+            p1: if is_last_chunk {
+                P1_SIGN_NORMAL_LAST_CHUNK
             } else {
-                let retcode = response.retcode();
-                if retcode == SW_INCORRECT_P1_P2 {
-                    return Err(NEARLedgerError::BlindSignatureNotSupported);
-                }
-                if retcode == SW_SETTING_BLIND_DISABLED {
-                    return Err(NEARLedgerError::BlindSignatureDisabled);
-                }
+                P1_SIGN_NORMAL
+            }, // Instruction parameter 1 (offset)
+            p2: NETWORK_ID,
+            data: chunk.to_vec(),
+        };
+        log_command(i, is_last_chunk, &command);
+        match transport.exchange(&command) {
+            Ok(response) => {
+                log::info!(
+                    "APDU out: {}\nAPDU ret code: {:x}",
+                    hex::encode(response.apdu_data()),
+                    response.retcode(),
+                );
+                // Ok means we successfully exchanged with the Ledger
+                // but doesn't mean our request succeeded
+                // we need to check it based on `response.retcode`
+                if response.retcode() == RETURN_CODE_OK {
+                    if is_last_chunk {
+                        return Ok(response.data().to_vec());
+                    }
+                } else {
+                    let retcode = response.retcode();
 
-                let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
-                Err(NEARLedgerError::APDUExchangeError(error_string))
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    return Err(NEARLedgerError::APDUExchangeError(error_string));
+                }
             }
-        }
-        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+            Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
+        };
     }
+    Err(NEARLedgerError::APDUExchangeError(
+        "Unable to process request".to_owned(),
+    ))
 }

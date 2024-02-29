@@ -1,6 +1,6 @@
 [package]
 name = "near-ledger"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2018"
 authors = ["Bohdan Khorolets <b@khorolets.com>"]
 description = "Transport library to integrate with NEAR Ledger app"
@@ -12,13 +12,80 @@ keywords = ["ledger", "nearprotocol"]
 name = "get_version"
 
 [[example]]
-name = "get_public_key"
+name = "get_public_key_display"
+path = "examples/get_public_key/display.rs"
 
 [[example]]
-name = "sign_transaction"
+name = "get_public_key_silent"
+path = "examples/get_public_key/silent.rs"
 
 [[example]]
-name = "blind_sign_transaction"
+name = "get_wallet_id"
+path = "examples/get_wallet_id.rs"
+
+[[example]]
+name = "sign_transfer"
+path = "examples/sign_transaction/transfer.rs"
+
+[[example]]
+name = "sign_create_account"
+path = "examples/sign_transaction/create_account.rs"
+
+[[example]]
+name = "sign_delete_account_short"
+path = "examples/sign_transaction/delete_account_short.rs"
+
+[[example]]
+name = "sign_delete_account_long"
+path = "examples/sign_transaction/delete_account_long.rs"
+
+[[example]]
+name = "sign_delete_key_ed25519"
+path = "examples/sign_transaction/delete_key_ed25519.rs"
+
+[[example]]
+name = "sign_delete_key_secp256k1"
+path = "examples/sign_transaction/delete_key_secp256k1.rs"
+
+[[example]]
+name = "sign_stake"
+path = "examples/sign_transaction/stake.rs"
+
+[[example]]
+name = "sign_add_key_fullaccess"
+path = "examples/sign_transaction/add_key_fullaccess.rs"
+
+[[example]]
+name = "sign_add_key_functioncall"
+path = "examples/sign_transaction/add_key_functioncall.rs"
+
+[[example]]
+name = "sign_deploy_contract"
+path = "examples/sign_transaction/deploy_contract.rs"
+
+[[example]]
+name = "sign_functioncall_str"
+path = "examples/sign_transaction/functioncall_str.rs"
+
+[[example]]
+name = "sign_functioncall_bin"
+path = "examples/sign_transaction/functioncall_bin.rs"
+
+[[example]]
+name = "sign_functioncall_str_parse_err"
+path = "examples/sign_transaction/functioncall_str_parse_err.rs"
+
+[[example]]
+name = "sign_batch_all_actions"
+path = "examples/sign_transaction/batch_all_actions.rs"
+
+[[example]]
+name = "sign_nep_413_message"
+path = "examples/sign_nep_413_message.rs"
+
+[[example]]
+name = "sign_nep_366_delegate_action"
+path = "examples/sign_nep_366_delegate_action.rs"
 
 [dependencies]
 ed25519-dalek = { version = "1" }
@@ -29,8 +96,10 @@ slip10 = "0.4.3"
 log = "0.4.20"
 hex = "0.4.3"
 near-primitives-core = "0.20.0"
+near-primitives = "0.20.0"
 
 [dev-dependencies]
 env_logger = "0.10.0"
 near-crypto = "0.20.0"
 near-primitives = "0.20.0"
+near-account-id = { version = "1.0.0", features = ["internal_unstable"]}

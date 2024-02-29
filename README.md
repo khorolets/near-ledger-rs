@@ -75,23 +75,62 @@ let signature = near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519
 ### Get version
 
 ```bash
-RUST_LOG=get_version,near_ledger=info cargo run --example get_version
+RUST_LOG=info cargo run --example get_version
 ```
 
 ### Get PublicKey from Ledger
 
+#### Display
+
 ```bash
-RUST_LOG=get_public_key,near_ledger=info cargo run --example get_public_key
+RUST_LOG=info cargo run --example get_public_key_display
+```
+#### Silent
+
+```bash
+RUST_LOG=info cargo run --example get_public_key_silent
 ```
 
+### Get WalletID from Ledger
+
+```bash
+RUST_LOG=info cargo run --example get_wallet_id
+```
 ### Sign a transaction
 
+#### Transfer
+
 ```bash
-RUST_LOG=sign_transaction,near_ledger=info cargo run --example sign_transaction
+RUST_LOG=info cargo run --example sign_transfer
 ```
 
-### Blind sign a transaction
+#### Other
 
 ```bash
-RUST_LOG=blind_sign_transaction,near_ledger=info cargo run --example blind_sign_transaction
+export RUST_LOG=info
+cargo run --example sign_create_account
+cargo run --example sign_delete_account_short
+cargo run --example sign_delete_account_long
+cargo run --example sign_delete_key_ed25519
+cargo run --example sign_delete_key_secp256k1
+cargo run --example sign_stake
+cargo run --example sign_add_key_fullaccess
+cargo run --example sign_add_key_functioncall
+cargo run --example sign_deploy_contract
+cargo run --example sign_functioncall_str
+cargo run --example sign_functioncall_bin
+cargo run --example sign_functioncall_str_parse_err
+cargo run --example sign_batch_all_actions
+```
+
+### Sign a NEP-413 message
+
+```bash
+RUST_LOG=info cargo run --example sign_nep_413_message
+```
+
+### Sign a NEP-366 delegate action
+
+```bash
+RUST_LOG=info cargo run --example sign_nep_366_delegate_action
 ```
