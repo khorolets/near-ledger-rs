@@ -19,8 +19,10 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_GITHUB_TOKEN }}
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: apt-get update
+        run: sudo apt-get update
+      - name: Install libudev
+        run: sudo apt-get -y install libudev-dev libsystemd-dev
       - name: Run release-plz
         uses: MarcoIeni/release-plz-action@v0.5
         env:
