@@ -5,12 +5,12 @@ use near_primitives::transaction::FunctionCallAction;
 mod common;
 
 fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction {
-    let mut tx = common::tx_template(ledger_pub_key.clone());
+    let mut tx = common::tx_template(ledger_pub_key);
 
     let mut bytes = vec![];
     bytes.push(123u8);
 
-    bytes.extend((0..255).into_iter().collect::<Vec<_>>());
+    bytes.extend((0..255).collect::<Vec<_>>());
 
     let f_call = FunctionCallAction {
         method_name: "saturating_add_signed".to_string(),

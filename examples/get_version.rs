@@ -1,4 +1,3 @@
-use env_logger;
 use near_ledger::{get_version, NEARLedgerError};
 
 fn main() -> Result<(), NEARLedgerError> {

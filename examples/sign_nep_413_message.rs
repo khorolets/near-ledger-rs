@@ -35,7 +35,7 @@ pub fn display_and_verify_signature(
     log::info!("{:<20} : {}", "signature (hex)", signature);
     log::info!("{:<20} : {}", "signature (base58)", signature_near);
 
-    assert!(public_key.verify(&hash.as_ref(), &signature).is_ok());
+    assert!(public_key.verify(hash.as_ref(), &signature).is_ok());
     log::info!("---");
 }
 

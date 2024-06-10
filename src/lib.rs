@@ -18,7 +18,7 @@ const INS_GET_VERSION: u8 = 6; // Instruction code to get app version from the L
 const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on the Ledger
 const INS_SIGN_NEP413_MESSAGE: u8 = 7; // Instruction code to sign a nep-413 message with Ledger
 const INS_SIGN_NEP366_DELEGATE_ACTION: u8 = 8; // Instruction code to sign a nep-413 message with Ledger
-const NETWORK_ID: u8 = 'W' as u8; // Instruction parameter 2
+const NETWORK_ID: u8 = b'W'; // Instruction parameter 2
 const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
 const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
 
@@ -51,11 +51,10 @@ pub enum NEARLedgerError {
 /// Converts BIP32Path into bytes (`Vec<u8>`)
 fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
     (0..hd_path.depth())
-        .map(|index| {
+        .flat_map(|index| {
             let value = *hd_path.index(index).unwrap();
             value.to_be_bytes()
         })
-        .flatten()
         .collect::<Vec<u8>>()
 }
 
@@ -68,7 +67,7 @@ fn log_command(index: usize, is_last_chunk: bool, command: &APDUCommand<Vec<u8>>
         } else {
             format!(" ({})", index)
         },
-        hex::encode(&command.serialize())
+        hex::encode(command.serialize())
     );
 }
 
@@ -79,7 +78,6 @@ fn log_command(index: usize, is_last_chunk: bool, command: &APDUCommand<Vec<u8>>
 /// * A `Result` whose `Ok` value is an `NEARLedgerAppVersion` (just a `Vec<u8>` for now, where first value is a major version, second is a minor and the last is the path)
 ///  and whose `Err` value is a `NEARLedgerError` containing an error which occurred.
 pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
-    //! Something
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
     let transport = get_transport()?;
@@ -91,7 +89,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
         data: vec![],
     };
 
-    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -109,11 +107,11 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
                 let retcode = response.retcode();
 
                 let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
-                return Err(NEARLedgerError::APDUExchangeError(error_string));
+                Err(NEARLedgerError::APDUExchangeError(error_string))
             }
         }
-        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
-    };
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
 }
 
 /// Gets PublicKey from the Ledger on the given `hd_path`
@@ -184,7 +182,7 @@ pub fn get_public_key_with_display_flag(
         p2: NETWORK_ID,
         data: hd_path_bytes,
     };
-    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -197,16 +195,16 @@ pub fn get_public_key_with_display_flag(
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
             if response.retcode() == RETURN_CODE_OK {
-                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
+                return Ok(ed25519_dalek::PublicKey::from_bytes(response.data()).unwrap());
             } else {
                 let retcode = response.retcode();
 
                 let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
-                return Err(NEARLedgerError::APDUExchangeError(error_string));
+                Err(NEARLedgerError::APDUExchangeError(error_string))
             }
         }
-        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
-    };
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
 }
 
 pub fn get_wallet_id(
@@ -226,7 +224,7 @@ pub fn get_wallet_id(
         p2: NETWORK_ID,
         data: hd_path_bytes,
     };
-    log::info!("APDU  in: {}", hex::encode(&command.serialize()));
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -239,16 +237,16 @@ pub fn get_wallet_id(
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
             if response.retcode() == RETURN_CODE_OK {
-                return Ok(ed25519_dalek::PublicKey::from_bytes(&response.data()).unwrap());
+                return Ok(ed25519_dalek::PublicKey::from_bytes(response.data()).unwrap());
             } else {
                 let retcode = response.retcode();
 
                 let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
-                return Err(NEARLedgerError::APDUExchangeError(error_string));
+                Err(NEARLedgerError::APDUExchangeError(error_string))
             }
         }
-        Err(err) => return Err(NEARLedgerError::LedgerHIDError(err)),
-    };
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
 }
 
 fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
