@@ -35,7 +35,7 @@ pub fn tx_template(
         .parse::<CryptoHash>()
         .unwrap();
 
-    let signer_account_str = hex::encode(&ledger_pub_key.to_bytes());
+    let signer_account_str = hex::encode(ledger_pub_key.to_bytes());
     let receiver_account_str = "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c";
 
     near_primitives::transaction::Transaction {
@@ -186,7 +186,7 @@ pub fn batch_of_all_types_of_actions(
         let mut bytes = vec![];
         bytes.push(123u8);
 
-        bytes.extend((0..255).into_iter().collect::<Vec<_>>());
+        bytes.extend((0..255).collect::<Vec<_>>());
 
         let f_call = FunctionCallAction {
             method_name: "saturating_add_signed".to_string(),
@@ -244,7 +244,7 @@ pub fn display_and_verify_signature(
 ) {
     let signature = display_signature(signature_bytes);
     assert!(public_key
-        .verify(&CryptoHash::hash_bytes(&msg).as_ref(), &signature)
+        .verify(CryptoHash::hash_bytes(&msg).as_ref(), &signature)
         .is_ok());
     log::info!("---");
 }
