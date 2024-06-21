@@ -5,7 +5,7 @@ use near_primitives_core::hash::CryptoHash;
 #[path = "../common/lib.rs"]
 mod common;
 
-fn tx(ledger_pub_key: ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction {
+fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction {
     let mut tx = common::tx_template(ledger_pub_key);
 
     let code = core::iter::repeat(42u8).take(3000).collect::<Vec<_>>();

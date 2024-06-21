@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use near_ledger::{get_wallet_id, NEARLedgerError};
-use slip10::BIP32Path;
+use slipped10::BIP32Path;
 
 #[path = "./common/lib.rs"]
 mod common;

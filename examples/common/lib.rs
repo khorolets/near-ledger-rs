@@ -5,12 +5,12 @@ use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
 use near_ledger::NEARLedgerError;
 use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
-use slip10::BIP32Path;
+use slipped10::BIP32Path;
 
 use near_crypto::SecretKey;
 use near_primitives::transaction::{DeployContractAction, FunctionCallAction};
 
-pub fn display_pub_key(public_key: ed25519_dalek::PublicKey) {
+pub fn display_pub_key(public_key: ed25519_dalek::VerifyingKey) {
     log::info!("---");
     log::info!("Public key:");
     log::info!("{:?}", public_key);
@@ -26,7 +26,7 @@ pub fn display_pub_key(public_key: ed25519_dalek::PublicKey) {
 }
 
 pub fn tx_template(
-    ledger_pub_key: ed25519_dalek::PublicKey,
+    ledger_pub_key: ed25519_dalek::VerifyingKey,
 ) -> near_primitives::transaction::Transaction {
     let public_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
         ledger_pub_key.to_bytes(),
@@ -48,7 +48,11 @@ pub fn tx_template(
     }
 }
 
-fn derive_secp256k1_public_key(public_key: &ed25519_dalek::PublicKey) -> near_crypto::PublicKey {
+/// `ed25519_dalek` pub key is just used as material for seed (for tests/examples)
+/// so that the same `near_crypto::KeyType::SECP256K1` is obtained from the same `ed25519_dalek::VerifyingKey`;
+///
+/// other than this purpose, the conversion has no meaning
+fn derive_secp256k1_public_key(public_key: &ed25519_dalek::VerifyingKey) -> near_crypto::PublicKey {
     let sk = SecretKey::from_seed(
         near_crypto::KeyType::SECP256K1,
         &format!("{:?}", public_key),
@@ -58,7 +62,7 @@ fn derive_secp256k1_public_key(public_key: &ed25519_dalek::PublicKey) -> near_cr
 
 #[allow(deprecated)]
 pub fn batch_of_all_types_of_actions(
-    ledger_pub_key: ed25519_dalek::PublicKey,
+    ledger_pub_key: ed25519_dalek::VerifyingKey,
 ) -> Vec<near_primitives::transaction::Action> {
     let create_account = near_primitives::transaction::Action::CreateAccount(
         near_primitives::transaction::CreateAccountAction {},
@@ -227,7 +231,7 @@ pub fn serialize_and_display_tx(transaction: near_primitives::transaction::Trans
 pub fn display_signature(signature_bytes: Vec<u8>) -> ed25519_dalek::Signature {
     log::info!("---");
     log::info!("Signature:");
-    let signature = Signature::from_bytes(&signature_bytes).unwrap();
+    let signature = Signature::from_slice(&signature_bytes).unwrap();
 
     let signature_near =
         near_crypto::Signature::from_parts(near_crypto::KeyType::ED25519, &signature_bytes)
@@ -240,7 +244,7 @@ pub fn display_signature(signature_bytes: Vec<u8>) -> ed25519_dalek::Signature {
 pub fn display_and_verify_signature(
     msg: Vec<u8>,
     signature_bytes: Vec<u8>,
-    public_key: ed25519_dalek::PublicKey,
+    public_key: ed25519_dalek::VerifyingKey,
 ) {
     let signature = display_signature(signature_bytes);
     assert!(public_key
@@ -251,7 +255,7 @@ pub fn display_and_verify_signature(
 
 pub fn get_key_sign_and_verify_flow<F>(f_transaction: F) -> Result<(), NEARLedgerError>
 where
-    F: FnOnce(ed25519_dalek::PublicKey) -> near_primitives::transaction::Transaction,
+    F: FnOnce(ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction,
 {
     env_logger::builder().init();
     let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
