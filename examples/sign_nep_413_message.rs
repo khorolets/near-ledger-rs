@@ -15,11 +15,11 @@ mod common;
 pub fn display_and_verify_signature(
     msg: &NEP413Payload,
     signature_bytes: Vec<u8>,
-    public_key: ed25519_dalek::PublicKey,
+    public_key: ed25519_dalek::VerifyingKey,
 ) {
     log::info!("---");
     log::info!("Signature:");
-    let signature = Signature::from_bytes(&signature_bytes).unwrap();
+    let signature = Signature::from_slice(&signature_bytes).unwrap();
 
     let msg_discriminant = MessageDiscriminant::new_off_chain(413).unwrap();
     let signable_message = SignableMessage {
