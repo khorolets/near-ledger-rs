@@ -88,7 +88,7 @@ name = "sign_nep_366_delegate_action"
 path = "examples/sign_nep_366_delegate_action.rs"
 
 [dependencies]
-ed25519-dalek = { version = "1" }
+ed25519-dalek = { version = "2" }
 ledger-transport = "0.11.0"
 ledger-transport-hid = "0.11.0"
 ledger-apdu = "0.11.0"
