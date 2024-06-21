@@ -5,7 +5,7 @@ use ed25519_dalek::Signature;
 use ed25519_dalek::Verifier;
 use near_ledger::NEARLedgerError;
 use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
-use slip10::BIP32Path;
+use slipped10::BIP32Path;
 
 use near_crypto::SecretKey;
 use near_primitives::transaction::{DeployContractAction, FunctionCallAction};

@@ -49,7 +49,7 @@ pub enum NEARLedgerError {
 }
 
 /// Converts BIP32Path into bytes (`Vec<u8>`)
-fn hd_path_to_bytes(hd_path: &slip10::BIP32Path) -> Vec<u8> {
+fn hd_path_to_bytes(hd_path: &slipped10::BIP32Path) -> Vec<u8> {
     (0..hd_path.depth())
         .flat_map(|index| {
             let value = *hd_path.index(index).unwrap();
@@ -117,7 +117,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 /// Gets PublicKey from the Ledger on the given `hd_path`
 ///
 /// # Inputs
-/// * `hd_path` - seed phrase hd path `slip10::BIP32Path` for which PublicKey to look
+/// * `hd_path` - seed phrase hd path `slipped10::BIP32Path` for which PublicKey to look
 ///
 /// # Returns
 ///
@@ -129,7 +129,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 ///
 /// ```no_run
 /// use near_ledger::get_public_key;
-/// use slip10::BIP32Path;
+/// use slipped10::BIP32Path;
 /// use std::str::FromStr;
 ///
 /// # fn main() {
@@ -153,13 +153,13 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 /// );
 /// ```
 pub fn get_public_key(
-    hd_path: slip10::BIP32Path,
+    hd_path: slipped10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     get_public_key_with_display_flag(hd_path, true)
 }
 
 pub fn get_public_key_with_display_flag(
-    hd_path: slip10::BIP32Path,
+    hd_path: slipped10::BIP32Path,
     display_and_confirm: bool,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
@@ -208,7 +208,7 @@ pub fn get_public_key_with_display_flag(
 }
 
 pub fn get_wallet_id(
-    hd_path: slip10::BIP32Path,
+    hd_path: slipped10::BIP32Path,
 ) -> Result<ed25519_dalek::PublicKey, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
@@ -261,7 +261,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// # Inputs
 /// * `unsigned_transaction_borsh_serializer` - unsigned transaction `near_primitives::transaction::Transaction`
 /// which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
-/// * `seed_phrase_hd_path` - seed phrase hd path `slip10::BIP32Path` with which to sign
+/// * `seed_phrase_hd_path` - seed phrase hd path `slipped10::BIP32Path` with which to sign
 ///
 /// # Returns
 ///
@@ -273,7 +273,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// ```no_run
 /// use near_ledger::sign_transaction;
 /// use near_primitives::{borsh, borsh::BorshSerialize};
-/// use slip10::BIP32Path;
+/// use slipped10::BIP32Path;
 /// use std::str::FromStr;
 ///
 /// # fn main() {
@@ -296,7 +296,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// ```
 pub fn sign_transaction(
     unsigned_tx: BorshSerializedUnsignedTransaction,
-    seed_phrase_hd_path: slip10::BIP32Path,
+    seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
     // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
@@ -363,7 +363,7 @@ pub struct NEP413Payload {
 
 pub fn sign_message_nep413(
     payload: &NEP413Payload,
-    seed_phrase_hd_path: slip10::BIP32Path,
+    seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
     // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
@@ -421,7 +421,7 @@ pub fn sign_message_nep413(
 
 pub fn sign_message_nep366_delegate_action(
     payload: &DelegateAction,
-    seed_phrase_hd_path: slip10::BIP32Path,
+    seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     let transport = get_transport()?;
     // seed_phrase_hd_path must be converted into bytes to be sent as `data` to the Ledger
