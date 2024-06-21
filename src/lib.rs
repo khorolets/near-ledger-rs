@@ -241,7 +241,15 @@ fn handle_public_key_response(
         let mut bytes: [u8; PUBLIC_KEY_LENGTH] = [0u8; PUBLIC_KEY_LENGTH];
         bytes.copy_from_slice(data);
 
-        Ok(ed25519_dalek::VerifyingKey::from_bytes(&bytes).unwrap())
+        let key = ed25519_dalek::VerifyingKey::from_bytes(&bytes).map_err(|err| {
+            NEARLedgerError::APDUExchangeError(format!(
+                "problem constructing `ed25519_dalek::VerifyingKey` from \
+                received byte array: {}, err: {:?}",
+                hex::encode(data),
+                err
+            ))
+        })?;
+        Ok(key)
     } else {
         let retcode = response.retcode();
 
