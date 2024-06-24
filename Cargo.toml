@@ -92,7 +92,7 @@ ed25519-dalek = { version = "2", default-features = false }
 ledger-transport = "0.11.0"
 ledger-transport-hid = "0.11.0"
 ledger-apdu = "0.11.0"
-slipped10 = { version = "0.4.6", git = "https://github.com/dj8yfo/slipped10.git", branch = "no_default_features"}
+slipped10 = { version = "0.4.6" }
 log = "0.4.20"
 hex = "0.4.3"
 near-primitives-core = ">0.22,<0.24"
