@@ -78,7 +78,7 @@ fn log_command(index: usize, is_last_chunk: bool, command: &APDUCommand<Vec<u8>>
 /// # Returns
 ///
 /// * A `Result` whose `Ok` value is an `NEARLedgerAppVersion` (just a `Vec<u8>` for now, where first value is a major version, second is a minor and the last is the path)
-///  and whose `Err` value is a `NEARLedgerError` containing an error which occurred.
+///   and whose `Err` value is a `NEARLedgerError` containing an error which occurred.
 pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
     // instantiate the connection to Ledger
     // will return an error if Ledger is not connected
@@ -269,13 +269,13 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 ///
 /// # Inputs
 /// * `unsigned_transaction_borsh_serializer` - unsigned transaction `near_primitives::transaction::Transaction`
-/// which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
+///    which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
 /// * `seed_phrase_hd_path` - seed phrase hd path `slipped10::BIP32Path` with which to sign
 ///
 /// # Returns
 ///
 /// * A `Result` whose `Ok` value is an `Signature` (bytes) and whose `Err` value is a
-/// `NEARLedgerError` containing an error which occurred.
+///   `NEARLedgerError` containing an error which occurred.
 ///
 /// # Examples
 ///
