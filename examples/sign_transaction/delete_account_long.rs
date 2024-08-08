@@ -13,7 +13,7 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
                 "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c1b11b3b31673033936ad07bddc01f9da27d974811e480fb197c799e23480a489".to_string()),
         },
     )];
-    tx
+    near_primitives::transaction::Transaction::V0(tx)
 }
 
 fn main() -> Result<(), NEARLedgerError> {

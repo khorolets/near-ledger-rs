@@ -14,7 +14,7 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
     tx.actions = vec![near_primitives::transaction::Action::DeleteKey(Box::new(
         near_primitives::transaction::DeleteKeyAction { public_key },
     ))];
-    tx
+    near_primitives::transaction::Transaction::V0(tx)
 }
 
 fn main() -> Result<(), NEARLedgerError> {
