@@ -10,7 +10,7 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
             deposit: 150000000000000000000000, // 0.15 NEAR
         },
     )];
-    tx
+    near_primitives::transaction::Transaction::V0(tx)
 }
 
 fn main() -> Result<(), NEARLedgerError> {

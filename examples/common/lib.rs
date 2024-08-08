@@ -27,7 +27,7 @@ pub fn display_pub_key(public_key: ed25519_dalek::VerifyingKey) {
 
 pub fn tx_template(
     ledger_pub_key: ed25519_dalek::VerifyingKey,
-) -> near_primitives::transaction::Transaction {
+) -> near_primitives::transaction::TransactionV0 {
     let public_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
         ledger_pub_key.to_bytes(),
     ));
@@ -38,7 +38,7 @@ pub fn tx_template(
     let signer_account_str = hex::encode(ledger_pub_key.to_bytes());
     let receiver_account_str = "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c";
 
-    near_primitives::transaction::Transaction {
+    near_primitives::transaction::TransactionV0 {
         public_key,
         block_hash,
         nonce: 103595482000005,

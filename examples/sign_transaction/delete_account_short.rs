@@ -13,7 +13,7 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
             beneficiary_id: AccountId::from_str("bob.near").unwrap(),
         },
     )];
-    tx
+    near_primitives::transaction::Transaction::V0(tx)
 }
 
 fn main() -> Result<(), NEARLedgerError> {

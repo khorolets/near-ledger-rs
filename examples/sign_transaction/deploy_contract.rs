@@ -15,7 +15,7 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
     tx.actions = vec![near_primitives::transaction::Action::DeployContract(
         DeployContractAction { code },
     )];
-    tx
+    near_primitives::transaction::Transaction::V0(tx)
 }
 
 fn main() -> Result<(), NEARLedgerError> {
