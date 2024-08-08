@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2](https://github.com/khorolets/near-ledger-rs/compare/v0.7.1...v0.7.2) - 2024-08-08
+
+### Other
+- updated near-* crates to allow 0.24.0 in addition to all the previously supported versions ([#18](https://github.com/khorolets/near-ledger-rs/pull/18))
+
 ## [0.7.1](https://github.com/khorolets/near-ledger-rs/compare/v0.7.0...v0.7.1) - 2024-06-24
 
 ### Other
