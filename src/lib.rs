@@ -352,7 +352,7 @@ fn sign_internal(
 
     let mut data: Vec<u8> = vec![];
     data.extend(hd_path_bytes);
-    data.extend_from_slice(&payload);
+    data.extend_from_slice(payload);
     let chunks = data.chunks(CHUNK_SIZE);
     let chunks_count = chunks.len();
 
