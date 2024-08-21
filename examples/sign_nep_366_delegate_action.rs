@@ -38,8 +38,10 @@ fn main() -> Result<(), NEARLedgerError> {
         public_key: ledger_pub_key,
     };
 
-    let signature_bytes =
-        near_ledger::sign_message_nep366_delegate_action(&delegate_action, hd_path)?;
+    let bytes = borsh::to_vec(&delegate_action)
+        .expect("Delegate action is not expected to fail on serialization");
+
+    let signature_bytes = near_ledger::sign_message_nep366_delegate_action(&bytes, hd_path)?;
 
     let signature = Signature::from_parts(near_crypto::KeyType::ED25519, &signature_bytes).unwrap();
 
