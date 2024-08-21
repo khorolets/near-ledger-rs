@@ -24,9 +24,9 @@ const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success fro
 const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
-pub type BorshSerializedUnsignedTransaction = Vec<u8>;
+pub type BorshSerializedUnsignedTransaction<'a> = &'a [u8];
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
-pub type BorshSerializedDelegateAction = Vec<u8>;
+pub type BorshSerializedDelegateAction<'a> = &'a [u8];
 
 const P1_GET_PUB_DISPLAY: u8 = 0;
 const P1_GET_PUB_SILENT: u8 = 1;
@@ -290,7 +290,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 /// # let near_unsigned_transaction = [10; 250];
 /// let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
 /// let borsh_transaction = borsh::to_vec(&near_unsigned_transaction).unwrap();
-/// let signature = sign_transaction(borsh_transaction, hd_path).unwrap();
+/// let signature = sign_transaction(&borsh_transaction, hd_path).unwrap();
 /// println!("{:#?}", signature);
 /// # }
 /// ```
@@ -324,7 +324,7 @@ pub fn sign_message_nep413(
     seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
     sign_internal(
-        borsh::to_vec(payload).unwrap(),
+        &borsh::to_vec(payload).unwrap(),
         seed_phrase_hd_path,
         INS_SIGN_NEP413_MESSAGE,
     )
@@ -342,7 +342,7 @@ pub fn sign_message_nep366_delegate_action(
 }
 
 fn sign_internal(
-    payload: Vec<u8>,
+    payload: &[u8],
     seed_phrase_hd_path: slipped10::BIP32Path,
     ins: u8,
 ) -> Result<SignatureBytes, NEARLedgerError> {

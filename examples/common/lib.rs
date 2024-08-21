@@ -266,7 +266,7 @@ where
     let unsigned_transaction = f_transaction(ledger_pub_key);
 
     let bytes = serialize_and_display_tx(unsigned_transaction);
-    let signature_bytes = near_ledger::sign_transaction(bytes.clone(), hd_path)?;
+    let signature_bytes = near_ledger::sign_transaction(&bytes, hd_path)?;
 
     display_and_verify_signature(bytes, signature_bytes, ledger_pub_key);
 
