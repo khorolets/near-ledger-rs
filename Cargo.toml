@@ -12,6 +12,9 @@ keywords = ["ledger", "nearprotocol"]
 name = "get_version"
 
 [[example]]
+name = "open_application"
+
+[[example]]
 name = "get_public_key_display"
 path = "examples/get_public_key/display.rs"
 
