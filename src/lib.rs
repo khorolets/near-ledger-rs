@@ -3,6 +3,8 @@
 //! Provides a set of commands that can be executed to communicate with NEAR App installed on Ledger device:
 //! - Read PublicKey from Ledger device by HD Path
 //! - Sign a Transaction
+use std::{thread::sleep, time::Duration};
+
 use borsh::BorshSerialize;
 use ed25519_dalek::PUBLIC_KEY_LENGTH;
 use ledger_apdu::APDUAnswer;
@@ -20,8 +22,12 @@ const INS_SIGN_TRANSACTION: u8 = 2; // Instruction code to sign a transaction on
 const INS_SIGN_NEP413_MESSAGE: u8 = 7; // Instruction code to sign a nep-413 message with Ledger
 const INS_SIGN_NEP366_DELEGATE_ACTION: u8 = 8; // Instruction code to sign a nep-413 message with Ledger
 const NETWORK_ID: u8 = b'W'; // Instruction parameter 2
-const RETURN_CODE_OK: u16 = 36864; // APDUAnswer.retcode which means success from Ledger
+const RETURN_CODE_OK: u16 = 0x9000; // APDUAnswer.retcode which means success from Ledger
 const CHUNK_SIZE: usize = 250; // Chunk size to be sent to Ledger
+
+const RETURN_CODE_APP_MISSING: u16 = 0x6807;
+const RETURN_CODE_ERROR_INPUT: u16 = 0x670A;
+const RETURN_CODE_UNKNOWN_ERROR: u16 = 0x5515;
 
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction<'a> = &'a [u8];
@@ -111,6 +117,142 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
 
                 let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
                 Err(NEARLedgerError::APDUExchangeError(error_string))
+            }
+        }
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
+}
+
+fn running_app_name() -> Result<String, NEARLedgerError> {
+    let transport = get_transport()?;
+
+    let command = APDUCommand {
+        cla: 0xB0,
+        ins: 0x01,
+        p1: 0,
+        p2: 0,
+        data: vec![],
+    };
+
+    match transport.exchange(&command) {
+        Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+            );
+
+            // Ok means we successfully exchanged with the Ledger
+            // but doesn't mean our request succeeded
+            // we need to check it based on `response.retcode`
+            match response.retcode() {
+                RETURN_CODE_OK => {
+                    // Output format:
+                    // * format u8
+                    // * ascii name length u8
+                    // * name in ascii
+
+                    let data = response.data();
+                    let app_name_len = data[1] as usize;
+                    let app_name = String::from_utf8_lossy(&data[2..2 + app_name_len]).to_string();
+
+                    return Ok(app_name);
+                }
+                RETURN_CODE_UNKNOWN_ERROR => Err(NEARLedgerError::APDUExchangeError(
+                    "The ledger most likely is locked. Please unlock ledger or reconnect it"
+                        .to_string(),
+                )),
+                retcode => {
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    Err(NEARLedgerError::APDUExchangeError(error_string))
+                }
+            }
+        }
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
+}
+
+fn quit_open_application() -> Result<(), NEARLedgerError> {
+    let transport = get_transport()?;
+
+    let command = APDUCommand {
+        cla: 0xB0,
+        ins: 0xa7,
+        p1: 0,
+        p2: 0,
+        data: vec![],
+    };
+
+    match transport.exchange(&command) {
+        Ok(response) => {
+            log::info!(
+                "APDU out: {}\nAPDU ret code: {:x}",
+                hex::encode(response.apdu_data()),
+                response.retcode(),
+            );
+
+            // Ok means we successfully exchanged with the Ledger
+            // but doesn't mean our request succeeded
+            // we need to check it based on `response.retcode`
+            match response.retcode() {
+                RETURN_CODE_OK => Ok(()),
+                retcode => {
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    Err(NEARLedgerError::APDUExchangeError(error_string))
+                }
+            }
+        }
+        Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
+    }
+}
+
+/// Open the NEAR application on the Ledger device
+///
+/// This is needed to do before calling other NEAR application
+/// related methods
+pub fn open_near_application() -> Result<(), NEARLedgerError> {
+    match running_app_name()?.as_str() {
+        "NEAR" => return Ok(()),
+        // BOLOS is a ledger dashboard
+        "BOLOS" => {}
+        x => {
+            quit_open_application()?;
+            // It won't work if we don't wait for the Ledger to close the app
+            sleep(Duration::from_secs(1));
+        }
+    }
+
+    let transport = get_transport()?;
+    let data = vec![b'N', b'E', b'A', b'R'];
+    let command: APDUCommand<Vec<u8>> = APDUCommand {
+        cla: 0xE0,
+        ins: 0xD8,
+        p1: 0x00,
+        p2: 0x00,
+        data,
+    };
+
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
+
+    match transport.exchange(&command) {
+        Ok(response) => {
+            log::info!("APDU ret code: {:x}", response.retcode(),);
+
+            // Ok means we successfully exchanged with the Ledger
+            // but doesn't mean our request succeeded
+            // we need to check it based on `response.retcode`
+            match response.retcode() {
+                RETURN_CODE_OK => Ok(()),
+                RETURN_CODE_APP_MISSING => Err(NEARLedgerError::APDUExchangeError(
+                    "NEAR application is missing on the Ledger device".to_string(),
+                )),
+                RETURN_CODE_ERROR_INPUT => Err(NEARLedgerError::APDUExchangeError(
+                    "Internal error: the input length of bytes is not correct".to_string(),
+                )),
+                retcode => {
+                    let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
+                    Err(NEARLedgerError::APDUExchangeError(error_string))
+                }
             }
         }
         Err(err) => Err(NEARLedgerError::LedgerHIDError(err)),
