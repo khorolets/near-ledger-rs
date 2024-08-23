@@ -29,6 +29,10 @@ const RETURN_CODE_APP_MISSING: u16 = 0x6807;
 const RETURN_CODE_ERROR_INPUT: u16 = 0x670A;
 const RETURN_CODE_UNKNOWN_ERROR: u16 = 0x5515;
 
+/// This error code is returned when the user declines to open the app.
+/// But I couldn't find it in the any of the ledger documentation...
+const RETURN_CODE_DECLINE: u16 = 0x5501;
+
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
 pub type BorshSerializedUnsignedTransaction<'a> = &'a [u8];
 /// Alias of `Vec<u8>`. The goal is naming to help understand what the bytes to deal with
@@ -215,7 +219,7 @@ pub fn open_near_application() -> Result<(), NEARLedgerError> {
         "NEAR" => return Ok(()),
         // BOLOS is a ledger dashboard
         "BOLOS" => {}
-        x => {
+        _ => {
             quit_open_application()?;
             // It won't work if we don't wait for the Ledger to close the app
             sleep(Duration::from_secs(1));
@@ -248,6 +252,9 @@ pub fn open_near_application() -> Result<(), NEARLedgerError> {
                 )),
                 RETURN_CODE_ERROR_INPUT => Err(NEARLedgerError::APDUExchangeError(
                     "Internal error: the input length of bytes is not correct".to_string(),
+                )),
+                RETURN_CODE_DECLINE => Err(NEARLedgerError::APDUExchangeError(
+                    "User declined to open the NEAR app".to_string(),
                 )),
                 retcode => {
                     let error_string = format!("Ledger APDU retcode: 0x{:X}", retcode);
