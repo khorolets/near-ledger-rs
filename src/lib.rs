@@ -160,7 +160,7 @@ fn running_app_name() -> Result<String, NEARLedgerError> {
                     let app_name_len = data[1] as usize;
                     let app_name = String::from_utf8_lossy(&data[2..2 + app_name_len]).to_string();
 
-                    return Ok(app_name);
+                    Ok(app_name)
                 }
                 RETURN_CODE_UNKNOWN_ERROR => Err(NEARLedgerError::APDUExchangeError(
                     "The ledger most likely is locked. Please unlock ledger or reconnect it"
