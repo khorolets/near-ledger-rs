@@ -462,7 +462,7 @@ pub fn sign_transaction(
 
 #[derive(Debug, BorshSerialize)]
 pub struct NEP413Payload {
-    pub messsage: String,
+    pub message: String,
     pub nonce: [u8; 32],
     pub recipient: String,
     pub callback_url: Option<String>,
