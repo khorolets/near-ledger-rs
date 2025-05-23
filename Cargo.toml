@@ -102,7 +102,7 @@ borsh = "1.5"
 
 [dev-dependencies]
 env_logger = "0.11.0"
-near-crypto = ">0.22,<0.26"
-near-primitives = ">0.22,<0.26"
-near-primitives-core = ">0.22,<0.26"
+near-crypto = ">0.22,<0.31"
+near-primitives = ">0.22,<0.31"
+near-primitives-core = ">0.22,<0.31"
 near-account-id = { version = "1.0.0", features = ["internal_unstable"] }
