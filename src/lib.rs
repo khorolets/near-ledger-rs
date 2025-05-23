@@ -137,6 +137,7 @@ fn running_app_name() -> Result<String, NEARLedgerError> {
         p2: 0,
         data: vec![],
     };
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -186,6 +187,8 @@ fn quit_open_application() -> Result<(), NEARLedgerError> {
         p2: 0,
         data: vec![],
     };
+
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
