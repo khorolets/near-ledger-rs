@@ -24,5 +24,5 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
 }
 
 fn main() -> Result<(), NEARLedgerError> {
-    common::get_key_sign_and_verify_flow(tx)
+    common::get_key_sign_and_verify_flow_with_cli_parse(tx)
 }

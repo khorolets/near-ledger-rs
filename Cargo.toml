@@ -106,3 +106,4 @@ near-crypto = ">0.22,<0.31"
 near-primitives = ">0.22,<0.31"
 near-primitives-core = ">0.22,<0.31"
 near-account-id = { version = "1.0.0", features = ["internal_unstable"] }
+clap = { version = "4.5.39", features = ["derive"] }
