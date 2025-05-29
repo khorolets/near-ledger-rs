@@ -115,6 +115,7 @@ cargo run --example sign_delete_key_ed25519
 cargo run --example sign_delete_key_secp256k1
 cargo run --example sign_stake
 cargo run --example sign_add_key_fullaccess
+cargo run --example sign_add_key_fullaccess  -- --speculos-test-generate
 cargo run --example sign_add_key_functioncall
 cargo run --example sign_deploy_contract
 cargo run --example sign_functioncall_str
@@ -122,6 +123,7 @@ cargo run --example sign_functioncall_bin
 cargo run --example sign_functioncall_str_parse_err
 cargo run --example sign_functioncall_str_parse_err -- --speculos-test-generate
 cargo run --example sign_batch_all_actions
+cargo run --example sign_batch_all_actions  -- --speculos-test-generate
 ```
 
 ### Sign a NEP-413 message
