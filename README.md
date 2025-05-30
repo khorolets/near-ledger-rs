@@ -105,6 +105,7 @@ to be sent without interacting with an actual device.
 
 ```bash
 RUST_LOG=near_ledger=info cargo run --example sign_transfer
+RUST_LOG=near_ledger=info cargo run --example sign_transfer  -- --speculos-test-generate
 ```
 
 #### Other
