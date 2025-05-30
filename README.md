@@ -144,6 +144,7 @@ cargo run --example sign_batch_all_actions  -- --speculos-test-generate
 
 ```bash
 RUST_LOG=near_ledger=info cargo run --example sign_nep_413_message
+RUST_LOG=near_ledger=info cargo run --example sign_nep_413_message  -- --speculos-test-generate
 ```
 
 ### Sign a NEP-366 delegate action
