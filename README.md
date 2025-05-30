@@ -127,6 +127,7 @@ cargo run --example sign_add_key_fullaccess  -- --speculos-test-generate
 cargo run --example sign_add_key_functioncall
 cargo run --example sign_add_key_functioncall  -- --speculos-test-generate
 cargo run --example sign_deploy_contract
+cargo run --example sign_deploy_contract  -- --speculos-test-generate
 cargo run --example sign_functioncall_str
 cargo run --example sign_functioncall_str  -- --speculos-test-generate
 cargo run --example sign_functioncall_bin
