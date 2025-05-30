@@ -117,7 +117,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
             if response.retcode() == RETURN_CODE_OK {
-                return Ok(response.data().to_vec());
+                Ok(response.data().to_vec())
             } else {
                 let retcode = response.retcode();
 
@@ -424,7 +424,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 ///
 /// # Inputs
 /// * `unsigned_transaction_borsh_serializer` - unsigned transaction `near_primitives::transaction::Transaction`
-///    which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
+///   which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
 /// * `seed_phrase_hd_path` - seed phrase hd path `slipped10::BIP32Path` with which to sign
 ///
 /// # Returns
