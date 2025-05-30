@@ -53,6 +53,7 @@ fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
     let args = Args::parse();
 
+    // signature taken from https://github.com/LedgerHQ/app-near/blob/fc6c7e2cd0349cbfde938d9de2a92cfeb0d98a7d/tests/test_sign_nep413_msg/test_nep413_msg.py#L82
     let result_signature_from_speculos_test = hex::decode("eb1200a990ba295ebd3b5a49729a30734179d2414cb43bd8af39b7103ac4dcdfd3174409a434a1f6a48d267e4f46492886129343076f8315afaf9e761183490e").unwrap();
 
     let maybe_static_test_case = if args.speculos_test_generate {
