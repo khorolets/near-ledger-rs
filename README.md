@@ -136,6 +136,8 @@ cargo run --example functioncall_str_newline
 cargo run --example functioncall_str_newline  -- --speculos-test-generate
 cargo run --example functioncall_str_ascii_subrange
 cargo run --example functioncall_str_ascii_subrange  -- --speculos-test-generate
+cargo run --example functioncall_utf8
+cargo run --example functioncall_utf8  -- --speculos-test-generate
 cargo run --example sign_functioncall_bin
 cargo run --example sign_functioncall_bin  -- --speculos-test-generate
 cargo run --example sign_functioncall_str_parse_err
