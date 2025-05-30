@@ -255,9 +255,9 @@ pub fn display_and_verify_signature(
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-struct Args {
+pub struct ExampleArgs {
     #[clap(long, short, action)]
-    speculos_test_generate: bool,
+    pub speculos_test_generate: bool,
 }
 
 pub fn get_key_sign_and_verify_flow_with_cli_parse<F>(
@@ -267,7 +267,7 @@ pub fn get_key_sign_and_verify_flow_with_cli_parse<F>(
 where
     F: FnOnce(ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction,
 {
-    let args = Args::parse();
+    let args = ExampleArgs::parse();
 
     let maybe_static_test_case = if args.speculos_test_generate {
         Some(StaticTestCase {
