@@ -71,6 +71,10 @@ name = "sign_functioncall_str"
 path = "examples/sign_transaction/functioncall_str.rs"
 
 [[example]]
+name = "functioncall_str_newline"
+path = "examples/sign_transaction/functioncall_str_newline.rs"
+
+[[example]]
 name = "sign_functioncall_bin"
 path = "examples/sign_transaction/functioncall_bin.rs"
 
