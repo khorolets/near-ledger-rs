@@ -152,6 +152,8 @@ RUST_LOG=near_ledger=info cargo run --example sign_nep_413_message  -- --speculo
 ```bash
 RUST_LOG=near_ledger=info cargo run --example sign_nep_366_delegate_action
 RUST_LOG=near_ledger=info cargo run --example sign_nep_366_delegate_action  -- --speculos-test-generate
+RUST_LOG=near_ledger=info cargo run --example sign_nep_366_delegate_action_simple
+RUST_LOG=near_ledger=info cargo run --example sign_nep_366_delegate_action_simple  -- --speculos-test-generate
 ```
 
 ### Open near app

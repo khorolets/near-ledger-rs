@@ -90,6 +90,10 @@ path = "examples/sign_nep_413_message.rs"
 name = "sign_nep_366_delegate_action"
 path = "examples/sign_nep_366_delegate_action.rs"
 
+[[example]]
+name = "sign_nep_366_delegate_action_simple"
+path = "examples/sign_nep_366_delegate_action_simple.rs"
+
 [dependencies]
 ed25519-dalek = { version = "2", default-features = false }
 ledger-transport = "0.11.0"
