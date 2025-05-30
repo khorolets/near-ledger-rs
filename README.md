@@ -98,6 +98,9 @@ RUST_LOG=near_ledger=info cargo run --example get_wallet_id
 ```
 ### Sign a transaction
 
+All all following examples have `--speculos-test-generate` cli flag which just generates APDUs
+to be sent without interacting with an actual device.
+
 #### Transfer
 
 ```bash
@@ -115,6 +118,7 @@ cargo run --example sign_delete_account_long
 cargo run --example sign_delete_key_ed25519
 cargo run --example sign_delete_key_ed25519  -- --speculos-test-generate
 cargo run --example sign_delete_key_secp256k1
+cargo run --example sign_delete_key_secp256k1  -- --speculos-test-generate
 cargo run --example sign_stake
 cargo run --example sign_stake  -- --speculos-test-generate
 cargo run --example sign_add_key_fullaccess
