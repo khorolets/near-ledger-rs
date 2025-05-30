@@ -115,6 +115,7 @@ cargo run --example sign_delete_account_long
 cargo run --example sign_delete_key_ed25519
 cargo run --example sign_delete_key_secp256k1
 cargo run --example sign_stake
+cargo run --example sign_stake  -- --speculos-test-generate
 cargo run --example sign_add_key_fullaccess
 cargo run --example sign_add_key_fullaccess  -- --speculos-test-generate
 cargo run --example sign_add_key_functioncall
