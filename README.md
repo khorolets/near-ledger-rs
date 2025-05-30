@@ -116,6 +116,7 @@ cargo run --example sign_create_account  -- --speculos-test-generate
 cargo run --example sign_delete_account_short
 cargo run --example sign_delete_account_short  -- --speculos-test-generate
 cargo run --example sign_delete_account_long
+cargo run --example sign_delete_account_long  -- --speculos-test-generate
 cargo run --example sign_delete_key_ed25519
 cargo run --example sign_delete_key_ed25519  -- --speculos-test-generate
 cargo run --example sign_delete_key_secp256k1
