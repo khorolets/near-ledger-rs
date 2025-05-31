@@ -17,9 +17,8 @@ fn main() -> Result<(), NEARLedgerError> {
     env_logger::builder().init();
     let args = ExampleArgs::parse();
 
-    // TODO: add actual obtained signature from speculos test somewhere in https://github.com/LedgerHQ/app-near/tree/develop/tests
-    // on a per-actual-need basis
-    let result_signature_from_speculos_test = hex::decode("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+    // signature taken from https://github.com/LedgerHQ/app-near/blob/fc6c7e2cd0349cbfde938d9de2a92cfeb0d98a7d/tests/test_sign_nep366_delegate_action/test_nep366_delegate_action.py#L49
+    let result_signature_from_speculos_test = hex::decode("c6645407278a472641350472fc83eb8002ef961ecf67102df5976adb5a071208db7309975dc0a56f7c5b604ea45ccfdf3d0a78be221c4afcee6aae03d394690c").unwrap();
 
     let maybe_static_test_case = if args.speculos_test_generate {
         Some(StaticTestCase {
@@ -40,10 +39,14 @@ fn main() -> Result<(), NEARLedgerError> {
 
     let sender_id = AccountId::from_str("bob.near").unwrap();
 
-    let actions = common::batch_of_all_types_of_actions(ledger_pub_key)
-        .into_iter()
-        .map(|action| action.try_into().unwrap())
-        .collect::<Vec<_>>();
+    let actions = vec![near_primitives::transaction::Action::Transfer(
+        near_primitives::transaction::TransferAction {
+            deposit: 150000000000000000000000, // 0.15 NEAR
+        },
+    )]
+    .into_iter()
+    .map(|action| action.try_into().unwrap())
+    .collect::<Vec<_>>();
 
     let ledger_pub_key = near_crypto::PublicKey::ED25519(near_crypto::ED25519PublicKey::from(
         ledger_pub_key.to_bytes(),

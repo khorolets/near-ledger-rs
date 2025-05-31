@@ -71,6 +71,19 @@ name = "sign_functioncall_str"
 path = "examples/sign_transaction/functioncall_str.rs"
 
 [[example]]
+name = "functioncall_str_newline"
+path = "examples/sign_transaction/functioncall_str_newline.rs"
+
+[[example]]
+name = "functioncall_str_ascii_subrange"
+path = "examples/sign_transaction/functioncall_str_ascii_subrange.rs"
+
+[[example]]
+name = "functioncall_utf8"
+path = "examples/sign_transaction/functioncall_utf8.rs"
+
+
+[[example]]
 name = "sign_functioncall_bin"
 path = "examples/sign_transaction/functioncall_bin.rs"
 
@@ -90,6 +103,10 @@ path = "examples/sign_nep_413_message.rs"
 name = "sign_nep_366_delegate_action"
 path = "examples/sign_nep_366_delegate_action.rs"
 
+[[example]]
+name = "sign_nep_366_delegate_action_simple"
+path = "examples/sign_nep_366_delegate_action_simple.rs"
+
 [dependencies]
 ed25519-dalek = { version = "2", default-features = false }
 ledger-transport = "0.11.0"
@@ -102,7 +119,8 @@ borsh = "1.5"
 
 [dev-dependencies]
 env_logger = "0.11.0"
-near-crypto = ">0.22,<0.26"
-near-primitives = ">0.22,<0.26"
-near-primitives-core = ">0.22,<0.26"
+near-crypto = ">0.22,<0.31"
+near-primitives = ">0.22,<0.31"
+near-primitives-core = ">0.22,<0.31"
 near-account-id = { version = "1.0.0", features = ["internal_unstable"] }
+clap = { version = "4.5.39", features = ["derive"] }

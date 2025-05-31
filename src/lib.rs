@@ -14,6 +14,8 @@ use ledger_transport_hid::{
     LedgerHIDError, TransportNativeHID,
 };
 
+pub mod print_apdus;
+
 const CLA: u8 = 0x80; // Instruction class
 const INS_GET_PUBLIC_KEY: u8 = 4; // Instruction code to get public key
 const INS_GET_WALLET_ID: u8 = 0x05; // Get Wallet ID
@@ -115,7 +117,7 @@ pub fn get_version() -> Result<NEARLedgerAppVersion, NEARLedgerError> {
             // but doesn't mean our request succeeded
             // we need to check it based on `response.retcode`
             if response.retcode() == RETURN_CODE_OK {
-                return Ok(response.data().to_vec());
+                Ok(response.data().to_vec())
             } else {
                 let retcode = response.retcode();
 
@@ -137,6 +139,7 @@ fn running_app_name() -> Result<String, NEARLedgerError> {
         p2: 0,
         data: vec![],
     };
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -186,6 +189,8 @@ fn quit_open_application() -> Result<(), NEARLedgerError> {
         p2: 0,
         data: vec![],
     };
+
+    log::info!("APDU  in: {}", hex::encode(command.serialize()));
 
     match transport.exchange(&command) {
         Ok(response) => {
@@ -419,7 +424,7 @@ fn get_transport() -> Result<TransportNativeHID, NEARLedgerError> {
 ///
 /// # Inputs
 /// * `unsigned_transaction_borsh_serializer` - unsigned transaction `near_primitives::transaction::Transaction`
-///    which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
+///   which is serialized with `BorshSerializer` and basically is just `Vec<u8>`
 /// * `seed_phrase_hd_path` - seed phrase hd path `slipped10::BIP32Path` with which to sign
 ///
 /// # Returns
@@ -457,7 +462,7 @@ pub fn sign_transaction(
     unsigned_tx: BorshSerializedUnsignedTransaction,
     seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
-    sign_internal(unsigned_tx, seed_phrase_hd_path, INS_SIGN_TRANSACTION)
+    send_payload_apdus(unsigned_tx, seed_phrase_hd_path, INS_SIGN_TRANSACTION)
 }
 
 #[derive(Debug, BorshSerialize)]
@@ -472,7 +477,7 @@ pub fn sign_message_nep413(
     payload: &NEP413Payload,
     seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
-    sign_internal(
+    send_payload_apdus(
         &borsh::to_vec(payload).unwrap(),
         seed_phrase_hd_path,
         INS_SIGN_NEP413_MESSAGE,
@@ -483,14 +488,16 @@ pub fn sign_message_nep366_delegate_action(
     payload: BorshSerializedDelegateAction,
     seed_phrase_hd_path: slipped10::BIP32Path,
 ) -> Result<SignatureBytes, NEARLedgerError> {
-    sign_internal(
+    send_payload_apdus(
         payload,
         seed_phrase_hd_path,
         INS_SIGN_NEP366_DELEGATE_ACTION,
     )
 }
 
-fn sign_internal(
+/// this method should be kept in sync with [`crate::print_apdus::print_payload_internal`],
+/// as avoiding copy-paste results in re-allocating `payload`
+fn send_payload_apdus(
     payload: &[u8],
     seed_phrase_hd_path: slipped10::BIP32Path,
     ins: u8,

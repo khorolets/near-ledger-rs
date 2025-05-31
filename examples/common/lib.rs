@@ -7,9 +7,9 @@ use near_ledger::NEARLedgerError;
 use near_primitives_core::{borsh, borsh::BorshSerialize, hash::CryptoHash, types::AccountId};
 use slipped10::BIP32Path;
 
+use clap::Parser;
 use near_crypto::SecretKey;
 use near_primitives::transaction::{DeployContractAction, FunctionCallAction};
-
 pub fn display_pub_key(public_key: ed25519_dalek::VerifyingKey) {
     log::info!("---");
     log::info!("Public key:");
@@ -253,22 +253,83 @@ pub fn display_and_verify_signature(
     log::info!("---");
 }
 
-pub fn get_key_sign_and_verify_flow<F>(f_transaction: F) -> Result<(), NEARLedgerError>
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct ExampleArgs {
+    #[clap(long, short, action)]
+    pub speculos_test_generate: bool,
+}
+
+pub fn get_key_sign_and_verify_flow_with_cli_parse<F>(
+    f_transaction: F,
+    expected_signature_bytes: Vec<u8>,
+) -> Result<(), NEARLedgerError>
+where
+    F: FnOnce(ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction,
+{
+    let args = ExampleArgs::parse();
+
+    let maybe_static_test_case = if args.speculos_test_generate {
+        Some(StaticTestCase {
+            public_key: static_speculos_public_key(),
+            expected_signature_bytes,
+        })
+    } else {
+        None
+    };
+    get_key_sign_and_verify_flow(f_transaction, maybe_static_test_case)
+}
+
+pub fn get_key_sign_and_verify_flow<F>(
+    f_transaction: F,
+    maybe_static_test_case: Option<StaticTestCase>,
+) -> Result<(), NEARLedgerError>
 where
     F: FnOnce(ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction,
 {
     env_logger::builder().init();
     let hd_path = BIP32Path::from_str("44'/397'/0'/0'/1'").unwrap();
 
-    let ledger_pub_key = near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?;
+    let ledger_pub_key = if let Some(ref static_test_case) = maybe_static_test_case {
+        static_test_case.public_key.clone()
+    } else {
+        near_ledger::get_public_key_with_display_flag(hd_path.clone(), false)?
+    };
+
     display_pub_key(ledger_pub_key);
 
     let unsigned_transaction = f_transaction(ledger_pub_key);
 
     let bytes = serialize_and_display_tx(unsigned_transaction);
-    let signature_bytes = near_ledger::sign_transaction(&bytes, hd_path)?;
 
-    display_and_verify_signature(bytes, signature_bytes, ledger_pub_key);
+    if let Some(ref static_test_case) = maybe_static_test_case {
+        near_ledger::print_apdus::transaction(&bytes, hd_path);
+        display_and_verify_signature(
+            bytes,
+            static_test_case.expected_signature_bytes.clone(),
+            ledger_pub_key,
+        );
+    } else {
+        let signature_bytes = near_ledger::sign_transaction(&bytes, hd_path)?;
+        display_and_verify_signature(bytes, signature_bytes, ledger_pub_key);
+    }
 
     Ok(())
+}
+
+pub struct StaticTestCase {
+    pub public_key: ed25519_dalek::VerifyingKey,
+    pub expected_signature_bytes: Vec<u8>,
+}
+
+pub fn static_speculos_public_key() -> ed25519_dalek::VerifyingKey {
+    let bytes =
+        hex::decode("c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f").unwrap();
+    let buffer = {
+        let mut buffer = [0u8; ed25519_dalek::PUBLIC_KEY_LENGTH];
+        buffer.copy_from_slice(&bytes);
+        buffer
+    };
+
+    ed25519_dalek::VerifyingKey::from_bytes(&buffer).unwrap()
 }

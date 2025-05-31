@@ -7,14 +7,30 @@ mod common;
 fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transaction::Transaction {
     let mut tx = common::tx_template(ledger_pub_key);
 
-    let args = r#"{"previous_vesting_schedule_with_salt":{"vesting_schedule":{"start_timestamp":"1577919600000000000","cliff_timestamp":"1609455600000000000","end_timestamp":"1704150000000000000"},"salt":"7bc709c22801118b743fae3866edb4dea1630a97ab9cd67e993428b94a0f397a"}, "vesting_schedule_with_salt":{"vesting_schedule":{"start_timestamp":"1577919600000000000","cliff_timestamp":"1609455600000000000","end_timestamp":"1704150000000000000"},"salt":"7bc709c22801118b743fae3866edb4dea1630a97ab9cd67e993428b94a0f397a"}}"#;
+    // 2, 3 and 4 bytes
+    let utf_mutibyte_chars = [('©', 2), ('ଔ', 3), ('🝙', 4)];
+
+    let mut str = String::new();
+
+    for i in 0..100 {
+        let (char, bytes) = utf_mutibyte_chars[i % 3];
+        str.push_str(&format!("{}", bytes));
+        str.push(char);
+    }
+
+    let args = format!("{{\"test_utf8_key\": \"{}\"}}", str);
+
+    println!("args: {}", args);
+    println!("args.len() {}", args.len());
 
     let f_call = FunctionCallAction {
-        method_name: "saturating_add_signed".to_string(),
+        method_name: "test_payload_with_utf8_text".to_string(),
         args: args.as_bytes().to_vec(),
         gas: 127127122121,
         deposit: 150000000000000000000000, // 0.15 NEAR,
     };
+
+    println!("{:?}", args);
 
     tx.actions = vec![near_primitives::transaction::Action::FunctionCall(
         Box::new(f_call),

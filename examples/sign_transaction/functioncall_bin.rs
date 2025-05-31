@@ -23,6 +23,10 @@ fn tx(ledger_pub_key: ed25519_dalek::VerifyingKey) -> near_primitives::transacti
 }
 
 fn main() -> Result<(), NEARLedgerError> {
-    common::get_key_sign_and_verify_flow(tx)?;
+    // TODO: add actual obtained signature from speculos test somewhere in https://github.com/LedgerHQ/app-near/tree/develop/tests
+    // on a per-actual-need basis
+    let result_signature_from_speculos_test = hex::decode("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+
+    common::get_key_sign_and_verify_flow_with_cli_parse(tx, result_signature_from_speculos_test)?;
     Ok(())
 }
