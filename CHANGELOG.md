@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/khorolets/near-ledger-rs/compare/v0.9.0...v0.9.1) - 2025-05-31
+
+### Added
+
+- print apdus for speculos ([#27](https://github.com/khorolets/near-ledger-rs/pull/27))
+
 ## [0.9.0](https://github.com/khorolets/near-ledger-rs/compare/v0.8.1...v0.9.0) - 2025-02-07
 
 ### Other
